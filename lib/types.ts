@@ -21,16 +21,34 @@ export interface Skills {
   methodologies: string[];
 }
 
+export interface KeyProject {
+  name: string;
+  description: string;
+  technologies: string[];
+  impact?: string;
+}
+
 export interface TailoredResume {
   professional_summary: string;
   highlights_of_qualifications?: string[];
   skills: Skills;
+  key_projects?: KeyProject[];
   experience: Experience[];
   education: Education[];
 }
 
+export interface ATSBreakdown {
+  keywords_match: number;
+  skills_match: number;
+  experience_relevance: number;
+  formatting_score: number;
+}
+
 export interface OptimizationNotes {
+  ats_score: number;
+  ats_breakdown?: ATSBreakdown;
   keywords_incorporated: string[];
+  keywords_missing?: string[];
   skills_highlighted: string[];
   experience_reordered: boolean;
   match_score: "High" | "Medium" | "Low";
@@ -75,6 +93,12 @@ export interface CandidateData {
   education: {
     degree: string;
     institution: string;
+  }[];
+  keyProjects?: {
+    name: string;
+    description: string;
+    technologies: string[];
+    impact?: string;
   }[];
 }
 

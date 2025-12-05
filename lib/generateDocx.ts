@@ -12,10 +12,11 @@ import { TailoredResume } from "./types";
 import { candidateData } from "./candidateData";
 
 const FONT_FAMILY = "Calibri";
-const HEADING_SIZE = 28;
-const SUBHEADING_SIZE = 24;
-const BODY_SIZE = 22;
-const CONTACT_SIZE = 20;
+const NAME_SIZE = 40;        // 20pt - Name at top
+const HEADING_SIZE = 24;     // 12pt - Section headings (PROFESSIONAL SUMMARY, SKILLS, etc.)
+const SUBHEADING_SIZE = 22;  // 11pt - Company names
+const BODY_SIZE = 22;        // 11pt - Body text and bullets
+const CONTACT_SIZE = 20;     // 10pt - Contact info
 
 export const generateResumeDocx = async (
   resume: TailoredResume
@@ -44,7 +45,7 @@ export const generateResumeDocx = async (
               new TextRun({
                 text: name,
                 bold: true,
-                size: 36,
+                size: NAME_SIZE,
                 font: FONT_FAMILY,
               }),
             ],
@@ -88,8 +89,16 @@ export const generateResumeDocx = async (
           createSectionHeading("TECHNICAL SKILLS"),
           ...createSkillsSection(resume.skills),
 
+          // Key Projects Section
+          ...(resume.key_projects && resume.key_projects.length > 0
+            ? [
+                createSectionHeading("KEY PROJECTS"),
+                ...createKeyProjectsSection(resume.key_projects),
+              ]
+            : []),
+
           // Experience Section
-          createSectionHeading("EXPERIENCE"),
+          createSectionHeading("PROFESSIONAL EXPERIENCE"),
           ...createExperienceSection(resume.experience),
 
           // Education Section
@@ -286,6 +295,88 @@ const createExperienceSection = (
 
   paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
 
+  return paragraphs;
+};
+
+const createKeyProjectsSection = (
+  projects: NonNullable<TailoredResume["key_projects"]>
+): Paragraph[] => {
+  const paragraphs: Paragraph[] = [];
+
+  projects.forEach((project) => {
+    // Project Name
+    paragraphs.push(
+      new Paragraph({
+        spacing: { after: 40 },
+        children: [
+          new TextRun({
+            text: project.name,
+            bold: true,
+            size: SUBHEADING_SIZE,
+            font: FONT_FAMILY,
+          }),
+        ],
+      })
+    );
+
+    // Description
+    paragraphs.push(
+      new Paragraph({
+        spacing: { after: 40 },
+        children: [
+          new TextRun({
+            text: project.description,
+            size: BODY_SIZE,
+            font: FONT_FAMILY,
+          }),
+        ],
+      })
+    );
+
+    // Technologies
+    paragraphs.push(
+      new Paragraph({
+        spacing: { after: 40 },
+        children: [
+          new TextRun({
+            text: "Technologies: ",
+            bold: true,
+            size: BODY_SIZE,
+            font: FONT_FAMILY,
+          }),
+          new TextRun({
+            text: project.technologies.join(", "),
+            size: BODY_SIZE,
+            font: FONT_FAMILY,
+          }),
+        ],
+      })
+    );
+
+    // Impact (if exists)
+    if (project.impact) {
+      paragraphs.push(
+        new Paragraph({
+          spacing: { after: 80 },
+          children: [
+            new TextRun({
+              text: "Impact: ",
+              bold: true,
+              size: BODY_SIZE,
+              font: FONT_FAMILY,
+            }),
+            new TextRun({
+              text: project.impact,
+              size: BODY_SIZE,
+              font: FONT_FAMILY,
+            }),
+          ],
+        })
+      );
+    }
+  });
+
+  paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
   return paragraphs;
 };
 

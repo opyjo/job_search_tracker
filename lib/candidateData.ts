@@ -84,10 +84,30 @@ export const candidateData: CandidateData = {
       institution: "Obafemi Awolowo University, Nigeria",
     },
   ],
+  keyProjects: [
+    {
+      name: "Enterprise Subscription Management Platform",
+      description: "Led development of a microfrontend-based subscription management system handling Bell's streaming partnerships with Netflix, Disney+, and Crave",
+      technologies: ["React", "TypeScript", "Module Federation", "GraphQL", "Redux"],
+      impact: "Serving millions of subscribers with 99.9% uptime",
+    },
+    {
+      name: "Unified Promocodes Management System",
+      description: "Built end-to-end promotional code management application for Bell's telecommunications services",
+      technologies: ["Next.js", "TypeScript", "REST APIs", "Node.js"],
+      impact: "30% increase in promotional efficiency, 25% reduction in customer service queries",
+    },
+    {
+      name: "Government Tax Portal Enhancement",
+      description: "Delivered secure, accessible web applications for CRA tax services ensuring WCAG 2.1 AA compliance",
+      technologies: ["React", "TypeScript", "Jest", "CI/CD Pipelines"],
+      impact: "Used by millions of Canadians with 30% reduction in bug rates",
+    },
+  ],
 };
 
 export const formatCandidateExperience = (): string => {
-  const { name, email, phone, location, linkedin, skills, experience, education } =
+  const { name, email, phone, location, linkedin, skills, experience, education, keyProjects, certifications } =
     candidateData;
 
   const skillsText = `
@@ -114,6 +134,21 @@ ${exp.achievements.map((a) => `- ${a}`).join("\n")}`
     .map((edu) => `- ${edu.degree} — ${edu.institution}`)
     .join("\n");
 
+  const keyProjectsText = keyProjects
+    ? keyProjects
+        .map(
+          (proj) =>
+            `- ${proj.name}: ${proj.description} (Technologies: ${proj.technologies.join(", ")})${proj.impact ? ` — Impact: ${proj.impact}` : ""}`
+        )
+        .join("\n")
+    : "";
+
+  const certificationsText = certifications
+    ? certifications
+        .map((cert) => `- ${cert.name} — ${cert.issuer}${cert.year ? ` (${cert.year})` : ""}`)
+        .join("\n")
+    : "";
+
   return `**Name:** ${name}
 **Contact:** ${email} | ${phone} | ${location}
 **LinkedIn:** ${linkedin}
@@ -127,13 +162,20 @@ A proficient Front-End Developer with 7+ years of experience in building high-pe
 - In-depth understanding of web standards, including cross-browser compatibility, progressive enhancement, graceful degradation, and responsive design
 - Deep understanding of REST principles with substantial experience in working with and implementing backend APIs
 - Mastery in foundations of the web, including vanilla JavaScript, HTML, and CSS3, ensuring robust and efficient coding practices
+- Proven track record of mentoring junior developers and leading cross-functional teams in enterprise environments
 
 **Skills:**
 ${skillsText}
 
+**Key Projects:**
+${keyProjectsText}
+
 **Experience:**
 
 ${experienceText}
+
+**Certifications:**
+${certificationsText}
 
 **Education:**
 ${educationText}`;

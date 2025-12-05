@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ResumeResponse } from "@/lib/types";
 import { generateResumeDocx } from "@/lib/generateDocx";
+import { generateResumePdf } from "@/lib/generatePdf";
 import { saveAs } from "file-saver";
 import { candidateData } from "@/lib/candidateData";
 
@@ -13,24 +14,40 @@ interface ResumePreviewProps {
 }
 
 const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [activeTab, setActiveTab] = useState<"preview" | "optimization">("preview");
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   
   const { tailored_resume, optimization_notes } = data;
 
-  const handleDownload = async () => {
-    setIsDownloading(true);
+  const handleDownloadDocx = async () => {
+    setIsDownloadingDocx(true);
     try {
       const blob = await generateResumeDocx(tailored_resume);
       const fileName = `${candidateData.name.replace(/\s+/g, "_")}_Resume_${new Date().toISOString().split("T")[0]}.docx`;
       saveAs(blob, fileName);
-      onToast?.("Resume downloaded successfully!", "success");
+      onToast?.("Word document downloaded!", "success");
     } catch (error) {
       console.error("Error generating document:", error);
       onToast?.("Failed to generate document. Please try again.", "error");
     } finally {
-      setIsDownloading(false);
+      setIsDownloadingDocx(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    setIsDownloadingPdf(true);
+    try {
+      const blob = generateResumePdf(tailored_resume);
+      const fileName = `${candidateData.name.replace(/\s+/g, "_")}_Resume_${new Date().toISOString().split("T")[0]}.pdf`;
+      saveAs(blob, fileName);
+      onToast?.("PDF downloaded!", "success");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      onToast?.("Failed to generate PDF. Please try again.", "error");
+    } finally {
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -141,6 +158,77 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
 
   return (
     <div className="w-full">
+      {/* ATS Score Display */}
+      <div className="mb-6 p-6 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl text-white">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative w-20 h-20">
+              <svg className="w-20 h-20 transform -rotate-90">
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  stroke="currentColor"
+                  strokeWidth="6"
+                  fill="none"
+                  className="text-slate-700"
+                />
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  stroke="currentColor"
+                  strokeWidth="6"
+                  fill="none"
+                  strokeDasharray={`${(optimization_notes.ats_score || 0) * 2.26} 226`}
+                  className={`${
+                    (optimization_notes.ats_score || 0) >= 80
+                      ? "text-emerald-400"
+                      : (optimization_notes.ats_score || 0) >= 60
+                      ? "text-amber-400"
+                      : "text-red-400"
+                  }`}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl font-bold">{optimization_notes.ats_score || 0}%</span>
+              </div>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">ATS Compatibility Score</h2>
+              <p className="text-slate-400 text-sm">
+                {(optimization_notes.ats_score || 0) >= 80
+                  ? "Excellent match! High chance of passing ATS."
+                  : (optimization_notes.ats_score || 0) >= 60
+                  ? "Good match. Consider addressing missing keywords."
+                  : "Needs improvement. Review missing skills below."}
+              </p>
+            </div>
+          </div>
+          
+          {optimization_notes.ats_breakdown && (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="bg-slate-700/50 rounded-lg px-3 py-2">
+                <p className="text-slate-400">Keywords</p>
+                <p className="font-semibold text-lg">{optimization_notes.ats_breakdown.keywords_match}%</p>
+              </div>
+              <div className="bg-slate-700/50 rounded-lg px-3 py-2">
+                <p className="text-slate-400">Skills</p>
+                <p className="font-semibold text-lg">{optimization_notes.ats_breakdown.skills_match}%</p>
+              </div>
+              <div className="bg-slate-700/50 rounded-lg px-3 py-2">
+                <p className="text-slate-400">Experience</p>
+                <p className="font-semibold text-lg">{optimization_notes.ats_breakdown.experience_relevance}%</p>
+              </div>
+              <div className="bg-slate-700/50 rounded-lg px-3 py-2">
+                <p className="text-slate-400">Format</p>
+                <p className="font-semibold text-lg">{optimization_notes.ats_breakdown.formatting_score}%</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Header with actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -204,36 +292,59 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
           </button>
           
           <button
-            onClick={handleDownload}
-            onKeyDown={(e) => handleKeyDown(e, handleDownload)}
-            disabled={isDownloading}
+            onClick={handleDownloadPdf}
+            onKeyDown={(e) => handleKeyDown(e, handleDownloadPdf)}
+            disabled={isDownloadingPdf}
+            aria-label="Download resume as PDF"
+            tabIndex={0}
+            className="px-4 py-2 text-sm font-semibold text-white
+                     bg-gradient-to-r from-red-500 to-rose-500
+                     rounded-lg shadow-lg shadow-red-500/25
+                     hover:from-red-600 hover:to-rose-600
+                     hover:shadow-xl hover:shadow-red-500/30
+                     focus:outline-none focus:ring-4 focus:ring-red-300
+                     transition-all duration-200
+                     disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isDownloadingPdf ? (
+              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            )}
+            PDF
+          </button>
+          
+          <button
+            onClick={handleDownloadDocx}
+            onKeyDown={(e) => handleKeyDown(e, handleDownloadDocx)}
+            disabled={isDownloadingDocx}
             aria-label="Download resume as Word document"
             tabIndex={0}
-            className="px-5 py-2 text-sm font-semibold text-white
-                     bg-gradient-to-r from-emerald-500 to-teal-500
-                     rounded-lg shadow-lg shadow-emerald-500/25
-                     hover:from-emerald-600 hover:to-teal-600
-                     hover:shadow-xl hover:shadow-emerald-500/30
-                     focus:outline-none focus:ring-4 focus:ring-emerald-300
+            className="px-4 py-2 text-sm font-semibold text-white
+                     bg-gradient-to-r from-blue-500 to-indigo-500
+                     rounded-lg shadow-lg shadow-blue-500/25
+                     hover:from-blue-600 hover:to-indigo-600
+                     hover:shadow-xl hover:shadow-blue-500/30
+                     focus:outline-none focus:ring-4 focus:ring-blue-300
                      transition-all duration-200
-                     disabled:opacity-50 disabled:cursor-not-allowed"
+                     disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {isDownloading ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Generating...
-              </span>
+            {isDownloadingDocx ? (
+              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
             ) : (
-              <span className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Download .docx
-              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
             )}
+            DOCX
           </button>
         </div>
       </div>
@@ -369,11 +480,36 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
               )}
             </div>
           </section>
+
+          {/* Key Projects */}
+          {tailored_resume.key_projects && tailored_resume.key_projects.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider border-b-2 border-slate-300 pb-1 mb-4">
+                Key Projects
+              </h2>
+              <div className="space-y-4">
+                {tailored_resume.key_projects.map((project, index) => (
+                  <div key={index} className="border-l-2 border-emerald-300 pl-4">
+                    <h3 className="font-bold text-slate-800">{project.name}</h3>
+                    <p className="text-slate-700 text-sm mb-2">{project.description}</p>
+                    <p className="text-slate-600 text-sm">
+                      <span className="font-semibold">Technologies:</span> {project.technologies.join(", ")}
+                    </p>
+                    {project.impact && (
+                      <p className="text-emerald-700 text-sm font-medium">
+                        <span className="font-semibold">Impact:</span> {project.impact}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
           
           {/* Experience */}
           <section className="mb-8">
             <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider border-b-2 border-slate-300 pb-1 mb-4">
-              Experience
+              Professional Experience
             </h2>
             <div className="space-y-6">
               {tailored_resume.experience.map((exp, index) => (
@@ -409,7 +545,7 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
               ))}
             </div>
           </section>
-          
+
           {/* Education */}
           <section>
             <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider border-b-2 border-slate-300 pb-1 mb-4">
@@ -430,24 +566,51 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
           {/* Keywords Incorporated */}
           <section className="mb-8">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              <span className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </span>
-              Keywords Incorporated
+              Keywords Incorporated ✓
             </h3>
             <div className="flex flex-wrap gap-2">
               {optimization_notes.keywords_incorporated.map((keyword, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-200"
+                  className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium border border-emerald-200"
                 >
                   {keyword}
                 </span>
               ))}
             </div>
           </section>
+
+          {/* Keywords Missing */}
+          {optimization_notes.keywords_missing && optimization_notes.keywords_missing.length > 0 && (
+            <section className="mb-8">
+              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </span>
+                Keywords Missing (Skills Gap)
+              </h3>
+              <p className="text-sm text-slate-500 mb-3">
+                These keywords from the job description couldn&apos;t be added because you don&apos;t have this experience:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {optimization_notes.keywords_missing.map((keyword, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm font-medium border border-red-200"
+                  >
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
           
           {/* Skills Highlighted */}
           <section className="mb-8">
