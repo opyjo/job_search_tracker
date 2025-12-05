@@ -58,14 +58,22 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
   };
 
   const formatResumeAsText = (): string => {
-    const { professional_summary, skills, experience, education } = tailored_resume;
+    const { professional_summary, highlights_of_qualifications, skills, experience, education } = tailored_resume;
     
     let text = `${candidateData.name}\n`;
     text += `${candidateData.email} | ${candidateData.phone} | ${candidateData.location} | ${candidateData.linkedin}\n\n`;
     
     text += `PROFESSIONAL SUMMARY\n${professional_summary}\n\n`;
     
-    text += `SKILLS\n`;
+    if (highlights_of_qualifications?.length) {
+      text += `HIGHLIGHTS OF QUALIFICATIONS\n`;
+      highlights_of_qualifications.forEach((h) => {
+        text += `✓ ${h}\n`;
+      });
+      text += `\n`;
+    }
+    
+    text += `TECHNICAL SKILLS\n`;
     if (skills.languages?.length) text += `Languages: ${skills.languages.join(", ")}\n`;
     if (skills.frameworks_libraries?.length) text += `Frameworks & Libraries: ${skills.frameworks_libraries.join(", ")}\n`;
     if (skills.architecture?.length) text += `Architecture: ${skills.architecture.join(", ")}\n`;
@@ -73,7 +81,7 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
     if (skills.methodologies?.length) text += `Methodologies: ${skills.methodologies.join(", ")}\n`;
     text += `\n`;
     
-    text += `EXPERIENCE\n`;
+    text += `PROFESSIONAL EXPERIENCE\n`;
     experience.forEach((exp) => {
       text += `${exp.company} — ${exp.location}\n`;
       text += `${exp.role} | ${exp.dates}\n`;
@@ -287,6 +295,29 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
               {tailored_resume.professional_summary}
             </p>
           </section>
+
+          {/* Highlights of Qualifications */}
+          {tailored_resume.highlights_of_qualifications && tailored_resume.highlights_of_qualifications.length > 0 && (
+            <section className="mb-8 group relative">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider border-b-2 border-slate-300 pb-1 flex-1">
+                  Highlights of Qualifications
+                </h2>
+                <CopyButton 
+                  section="Highlights" 
+                  content={tailored_resume.highlights_of_qualifications.map(h => `• ${h}`).join("\n")} 
+                />
+              </div>
+              <ul className="space-y-2">
+                {tailored_resume.highlights_of_qualifications.map((highlight, index) => (
+                  <li key={index} className="flex items-start gap-2 text-slate-700">
+                    <span className="text-amber-500 mt-1">✓</span>
+                    <span>{highlight}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           
           {/* Skills */}
           <section className="mb-8 group relative">

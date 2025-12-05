@@ -23,6 +23,7 @@ export interface Skills {
 
 export interface TailoredResume {
   professional_summary: string;
+  highlights_of_qualifications?: string[];
   skills: Skills;
   experience: Experience[];
   education: Education[];

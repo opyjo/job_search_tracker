@@ -76,8 +76,16 @@ export const generateResumeDocx = async (
             ],
           }),
 
+          // Highlights of Qualifications Section
+          ...(resume.highlights_of_qualifications && resume.highlights_of_qualifications.length > 0
+            ? [
+                createSectionHeading("HIGHLIGHTS OF QUALIFICATIONS"),
+                ...createHighlightsSection(resume.highlights_of_qualifications),
+              ]
+            : []),
+
           // Skills Section
-          createSectionHeading("SKILLS"),
+          createSectionHeading("TECHNICAL SKILLS"),
           ...createSkillsSection(resume.skills),
 
           // Experience Section
@@ -116,6 +124,30 @@ const createSectionHeading = (title: string): Paragraph => {
       }),
     ],
   });
+};
+
+const createHighlightsSection = (highlights: string[]): Paragraph[] => {
+  const paragraphs: Paragraph[] = [];
+
+  highlights.forEach((highlight) => {
+    paragraphs.push(
+      new Paragraph({
+        spacing: { after: 60 },
+        bullet: { level: 0 },
+        children: [
+          new TextRun({
+            text: highlight,
+            size: BODY_SIZE,
+            font: FONT_FAMILY,
+          }),
+        ],
+      })
+    );
+  });
+
+  paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
+
+  return paragraphs;
 };
 
 const createSkillsSection = (skills: TailoredResume["skills"]): Paragraph[] => {

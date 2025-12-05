@@ -2,10 +2,10 @@ import { CandidateData } from "./types";
 
 export const candidateData: CandidateData = {
   name: "Johnson Ojo",
-  email: "johnsonoojo@gmail.com",
+  email: "opeyemiojoj@gmail.com",
   phone: "(437) 778-5339",
   location: "Toronto, ON",
-  linkedin: "linkedin.com/in/johnsonojo",
+  linkedin: "linkedin.com/in/opeyemi-ojo-86649629",
   skills: {
     languages: "JavaScript (ES6+), TypeScript, HTML5, CSS3, SQL",
     frameworks_libraries:
@@ -18,7 +18,7 @@ export const candidateData: CandidateData = {
     methodologies: "Agile/Scrum, Test-Driven Development, Code Review",
     design: "Figma, Adobe XD (Basic)",
     other:
-      "Web Accessibility Standards, OWASP Security Basics, Performance Optimization",
+      "Web Accessibility Standards, OWASP Security Basics, Performance Optimization, Code Splitting, Lazy Loading",
   },
   experience: [
     {
@@ -30,13 +30,16 @@ export const candidateData: CandidateData = {
         "Lead front-end development for enterprise subscription management systems supporting Bell's streaming partnerships with Netflix, Disney+, and Crave, serving millions of Canadian subscribers",
         "Architected and implemented microfrontend architecture for the Subscription Manager platform, enabling independent deployment of 5+ applications and reducing release cycle time by 40%",
         "Built billing integration workflows processing multi-partner subscription bundles (Netflix, Disney+, Crave) handling millions in monthly recurring revenue",
-        "Developed the Unified Promocodes Management application, achieving 30% increase in promotional efficiency and 25% reduction in customer service queries",
-        "Spearheaded Playwright end-to-end testing implementation, resulting in 40% faster test execution and 35% improvement in bug detection accuracy",
+        "Developed the Unified Promocodes Management application, achieving 30% increase in promotional efficiency and 25% reduction in customer service queries, streamlining promotional code management across Bell's telecommunications services",
+        "Spearheaded Playwright end-to-end testing implementation, resulting in 40% faster test execution and 35% improvement in bug detection accuracy, establishing new benchmarks for software quality assurance",
         "Led cross-functional collaboration between front-end, back-end, and billing teams to ensure seamless system integration across Bell's telecommunications infrastructure",
-        "Mentored 3 junior developers in React best practices, code review processes, and front-end architecture patterns",
+        "Facilitated 20% improvement in cross-functional team collaboration by aligning front-end functionalities with overall system architecture, significantly boosting user experience and system reliability",
+        "Mentored 3 junior developers in React best practices, code review processes, and front-end architecture patterns, conducting regular code reviews and providing technical guidance",
         "Managed build process for front-end assets using Webpack, optimizing application for maximum speed and scalability",
-        "Implemented state-of-the-art security practices in web applications, including XSS and CSRF protection",
-        "Utilized Next.js for server-side rendering and static site generation, enhancing SEO and load times",
+        "Implemented state-of-the-art security practices in web applications, including XSS and CSRF protection, to safeguard user data",
+        "Built scalable single-page applications (SPAs) with React, optimizing for performance and user engagement",
+        "Utilized Next.js for server-side rendering and static site generation, enhancing SEO and load times for content-rich websites",
+        "Collaborated in Agile environment, participating in sprints, stand-ups, and retrospectives to continuously improve processes and outcomes",
       ],
     },
     {
@@ -47,12 +50,13 @@ export const candidateData: CandidateData = {
       achievements: [
         "Delivered secure, accessible web applications for government tax services used by millions of Canadians",
         "Successfully drove multiple projects from concept to deployment, demonstrating proficiency in each stage of the software development lifecycle",
-        "Reduced production bug rate by 30% through implementation of comprehensive unit and integration testing protocols",
-        "Implemented CI/CD pipelines improving deployment efficiency and code quality across multiple projects",
-        "Led bi-weekly sprint planning meetings, ensuring team alignment and achieving 20% increase in team productivity",
-        "Collaborated with globally distributed teams across time zones using Slack, JIRA, and Confluence",
-        "Applied fixes, patches, and upgrades from product vendors",
         "Designed user-friendly interfaces, integrated backend services, and ensured seamless functionality across various platforms",
+        "Delivered features with high standard of quality, implementing robust testing protocols that reduced bug rates by 30% through meticulous unit and integration testing",
+        "Consistently applied engineering best practices throughout development, resulting in maintainable, reliable, and secure systems",
+        "Adopted modular coding approach and implemented CI/CD pipelines, improving code quality and deployment efficiency across multiple projects",
+        "Applied fixes, patches, and upgrades from product vendors to maintain system security and performance",
+        "Led bi-weekly sprint planning meetings, ensuring team alignment with project goals and timelines, resulting in 20% increase in team productivity",
+        "Collaborated effectively with globally distributed team, coordinating across different time zones to deliver key features using Slack, JIRA, and Confluence",
       ],
     },
     {
@@ -61,11 +65,12 @@ export const candidateData: CandidateData = {
       role: "Junior Front-End Developer",
       dates: "Jan 2018 – Sept 2020",
       achievements: [
-        "Led responsive redesign initiative resulting in 40% increase in mobile user engagement",
-        "Improved site performance score by 35% on Google PageSpeed Insights through image compression, code minification, and lazy loading",
-        "Achieved 15% rise in user accessibility through cross-browser compatibility testing and adjustments",
-        "Developed and integrated multiple RESTful APIs and utilized AJAX for asynchronous data loading",
-        "Increased user retention rates by 20% through improved interactivity and functionality",
+        "Spearheaded responsive redesign of main web application, reworking CSS and JavaScript to ensure optimal viewing on various devices, resulting in 40% increase in mobile user engagement",
+        "Improved site performance score by 35% on Google PageSpeed Insights through image compression, CSS and JavaScript minification, and lazy loading implementation",
+        "Led cross-browser compatibility effort across all major browsers including older versions, resulting in 15% rise in user accessibility through extensive testing and HTML/CSS adjustments",
+        "Developed and integrated multiple RESTful APIs and utilized AJAX for asynchronous data loading, significantly improving interactivity and functionality of web applications",
+        "Enhanced user experiences resulting in 20% increase in user retention rates through improved interactivity and functionality",
+        "Built strong knowledge of operating systems, middleware, and other technologies for building and maintaining multi-tiered enterprise business solutions",
       ],
     },
   ],
@@ -113,6 +118,16 @@ ${exp.achievements.map((a) => `- ${a}`).join("\n")}`
 **Contact:** ${email} | ${phone} | ${location}
 **LinkedIn:** ${linkedin}
 
+**Professional Summary:**
+A proficient Front-End Developer with 7+ years of experience in building high-performance, scalable web applications. Skilled in modern web technologies including JavaScript, TypeScript, Redux, React, NextJS, and HTML/CSS, with a strong focus on creating responsive and user-friendly interfaces. Experienced in agile methodologies and cross-functional teamwork, consistently delivering projects with a keen eye for detail and maintainability.
+
+**Highlights of Qualifications:**
+- Knowledge of Agile development methodologies demonstrating deep understanding of iterative development, continuous integration, and collaborative project management
+- Extensive knowledge in advanced React concepts, JavaScript, HTML5, and CSS, showcasing expertise in building sophisticated, dynamic web interfaces and single-page applications
+- In-depth understanding of web standards, including cross-browser compatibility, progressive enhancement, graceful degradation, and responsive design
+- Deep understanding of REST principles with substantial experience in working with and implementing backend APIs
+- Mastery in foundations of the web, including vanilla JavaScript, HTML, and CSS3, ensuring robust and efficient coding practices
+
 **Skills:**
 ${skillsText}
 
@@ -123,4 +138,3 @@ ${experienceText}
 **Education:**
 ${educationText}`;
 };
-

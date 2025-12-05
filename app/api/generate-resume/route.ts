@@ -86,6 +86,15 @@ export async function POST(request: NextRequest) {
     console.error("Error generating resume:", error);
     
     if (error instanceof Anthropic.APIError) {
+      if (error.status === 400) {
+        const errorMessage = String(error.message || "");
+        if (errorMessage.includes("credit balance")) {
+          return NextResponse.json(
+            { error: "Anthropic API credit balance is too low. Please add credits at https://console.anthropic.com/settings/billing" },
+            { status: 400 }
+          );
+        }
+      }
       if (error.status === 401) {
         return NextResponse.json(
           { error: "Invalid API key. Please check your ANTHROPIC_API_KEY." },
