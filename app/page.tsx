@@ -1,65 +1,290 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import JobDescriptionForm from "./components/JobDescriptionForm";
+import ResumePreview from "./components/ResumePreview";
+import LoadingState from "./components/LoadingState";
+import TargetCompanies from "./components/TargetCompanies";
+import ApplicationTracker from "./components/ApplicationTracker";
+import Toast, { ToastItem, useToast } from "./components/Toast";
+import { ResumeResponse, ErrorResponse, APIResponse } from "@/lib/types";
+import { candidateData } from "@/lib/candidateData";
+
+type AppState = "input" | "loading" | "result" | "error";
+type ActiveView = "tailor" | "companies" | "tracker";
+
+const isErrorResponse = (response: APIResponse): response is ErrorResponse => {
+  return "error" in response;
+};
 
 export default function Home() {
+  const [appState, setAppState] = useState<AppState>("input");
+  const [activeView, setActiveView] = useState<ActiveView>("tailor");
+  const [resumeData, setResumeData] = useState<ResumeResponse | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const { toasts, addToast, removeToast } = useToast();
+
+  const handleSubmit = async (jobDescription: string) => {
+    setAppState("loading");
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("/api/generate-resume", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ jobDescription }),
+      });
+
+      const data: APIResponse = await response.json();
+
+      if (!response.ok || isErrorResponse(data)) {
+        const error = isErrorResponse(data) ? data.error : "An unexpected error occurred";
+        setErrorMessage(error);
+        setAppState("error");
+        addToast(error, "error");
+        return;
+      }
+
+      setResumeData(data);
+      setAppState("result");
+      addToast("Resume tailored successfully!", "success");
+    } catch (error) {
+      console.error("Error:", error);
+      const message = "Failed to connect to the server. Please try again.";
+      setErrorMessage(message);
+      setAppState("error");
+      addToast(message, "error");
+    }
+  };
+
+  const handleReset = () => {
+    setAppState("input");
+    setResumeData(null);
+    setErrorMessage("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      action();
+    }
+  };
+
+  const viewDescriptions: Record<ActiveView, string> = {
+    tailor: "Paste a job description and get a tailored resume optimized for ATS systems and human recruiters.",
+    companies: "Your curated list of target companies organized by priority and interview difficulty.",
+    tracker: "Track your job applications, interview stages, and follow-up dates all in one place.",
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50/30 to-orange-50/20">
+      {/* Decorative background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-200/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-amber-100/10 to-transparent rounded-full" />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-8 lg:py-12">
+        {/* Header */}
+        <header className="text-center mb-8">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
+            <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-800 via-amber-700 to-orange-600 bg-clip-text text-transparent">
+              Resume Tailor AI
+            </h1>
+          </div>
+          <p className="text-slate-600 text-lg max-w-2xl mx-auto mb-6">
+            {viewDescriptions[activeView]}
           </p>
+          
+          {/* View Toggle */}
+          <div className="inline-flex bg-slate-100 p-1 rounded-xl flex-wrap justify-center gap-1">
+            <button
+              onClick={() => setActiveView("tailor")}
+              onKeyDown={(e) => handleKeyDown(e, () => setActiveView("tailor"))}
+              aria-label="Resume Tailor view"
+              aria-selected={activeView === "tailor"}
+              tabIndex={0}
+              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
+                        ${activeView === "tailor"
+                          ? "bg-white text-slate-800 shadow-sm"
+                          : "text-slate-600 hover:text-slate-800"
+                        }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span className="hidden sm:inline">Resume Tailor</span>
+              <span className="sm:hidden">Tailor</span>
+            </button>
+            <button
+              onClick={() => setActiveView("companies")}
+              onKeyDown={(e) => handleKeyDown(e, () => setActiveView("companies"))}
+              aria-label="Target Companies view"
+              aria-selected={activeView === "companies"}
+              tabIndex={0}
+              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
+                        ${activeView === "companies"
+                          ? "bg-white text-slate-800 shadow-sm"
+                          : "text-slate-600 hover:text-slate-800"
+                        }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <span className="hidden sm:inline">Target Companies</span>
+              <span className="sm:hidden">Companies</span>
+            </button>
+            <button
+              onClick={() => setActiveView("tracker")}
+              onKeyDown={(e) => handleKeyDown(e, () => setActiveView("tracker"))}
+              aria-label="Application Tracker view"
+              aria-selected={activeView === "tracker"}
+              tabIndex={0}
+              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
+                        ${activeView === "tracker"
+                          ? "bg-white text-slate-800 shadow-sm"
+                          : "text-slate-600 hover:text-slate-800"
+                        }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              <span className="hidden sm:inline">Application Tracker</span>
+              <span className="sm:hidden">Tracker</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <div className="max-w-4xl mx-auto">
+          {activeView === "tailor" && (
+            <>
+              {appState === "input" && (
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
+                  {/* Candidate info badge */}
+                  <div className="flex items-center gap-3 mb-8 p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold">
+                      {candidateData.name.split(" ").map((n) => n[0]).join("")}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800">{candidateData.name}</p>
+                      <p className="text-sm text-slate-500">Your profile is ready to be tailored</p>
+                    </div>
+                  </div>
+
+                  <JobDescriptionForm onSubmit={handleSubmit} isLoading={false} />
+                </div>
+              )}
+
+              {appState === "loading" && (
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
+                  <LoadingState />
+                </div>
+              )}
+
+              {appState === "result" && resumeData && (
+                <ResumePreview 
+                  data={resumeData} 
+                  onReset={handleReset}
+                  onToast={addToast}
+                />
+              )}
+
+              {appState === "error" && (
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-8 w-8 text-red-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        />
+                      </svg>
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">
+                      Something went wrong
+                    </h2>
+                    <p className="text-slate-600 mb-6 max-w-md mx-auto">
+                      {errorMessage}
+                    </p>
+                    <button
+                      onClick={handleReset}
+                      className="px-6 py-3 text-sm font-semibold text-white
+                               bg-gradient-to-r from-amber-500 to-orange-500
+                               rounded-xl shadow-lg shadow-amber-500/25
+                               hover:from-amber-600 hover:to-orange-600
+                               focus:outline-none focus:ring-4 focus:ring-amber-300
+                               transition-all duration-200"
+                      aria-label="Try again"
+                      tabIndex={0}
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeView === "companies" && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
+              <TargetCompanies />
+            </div>
+          )}
+
+          {activeView === "tracker" && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
+              <ApplicationTracker />
+            </div>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+        {/* Footer */}
+        <footer className="text-center mt-12 text-sm text-slate-500">
+          <p>
+            Built with Next.js, Tailwind CSS, and Claude AI
+          </p>
+        </footer>
+      </div>
+
+      {/* Toast Notifications */}
+      {toasts.map((toast: ToastItem) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+    </main>
   );
 }
