@@ -40,7 +40,8 @@ export const applicationService = {
   async getAll(): Promise<Application[]> {
     const client = checkSupabaseConfig();
     
-    const { data, error } = await client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (client as any)
       .from("applications")
       .select("*")
       .order("date_applied", { ascending: false });
@@ -50,13 +51,14 @@ export const applicationService = {
       throw error;
     }
 
-    return data || [];
+    return (data as Application[]) || [];
   },
 
   async getById(id: string): Promise<Application | null> {
     const client = checkSupabaseConfig();
     
-    const { data, error } = await client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (client as any)
       .from("applications")
       .select("*")
       .eq("id", id)
@@ -67,13 +69,14 @@ export const applicationService = {
       throw error;
     }
 
-    return data;
+    return data as Application | null;
   },
 
   async create(application: ApplicationInsert): Promise<Application> {
     const client = checkSupabaseConfig();
     
-    const { data, error } = await client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (client as any)
       .from("applications")
       .insert(application)
       .select()
@@ -84,13 +87,14 @@ export const applicationService = {
       throw error;
     }
 
-    return data;
+    return data as Application;
   },
 
   async update(id: string, updates: ApplicationUpdate): Promise<Application> {
     const client = checkSupabaseConfig();
     
-    const { data, error } = await client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (client as any)
       .from("applications")
       .update(updates)
       .eq("id", id)
@@ -102,13 +106,14 @@ export const applicationService = {
       throw error;
     }
 
-    return data;
+    return data as Application;
   },
 
   async delete(id: string): Promise<void> {
     const client = checkSupabaseConfig();
     
-    const { error } = await client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (client as any)
       .from("applications")
       .delete()
       .eq("id", id);
@@ -129,7 +134,8 @@ export const applicationService = {
   }> {
     const client = checkSupabaseConfig();
     
-    const { data, error } = await client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (client as any)
       .from("applications")
       .select("status");
 
@@ -147,9 +153,10 @@ export const applicationService = {
       rejected: 0,
     };
 
-    data?.forEach((app) => {
-      if (app.status in stats) {
-        stats[app.status as keyof typeof stats]++;
+    data?.forEach((app: { status: string }) => {
+      const status = app.status as keyof typeof stats;
+      if (status in stats && status !== "total") {
+        stats[status]++;
       }
     });
 

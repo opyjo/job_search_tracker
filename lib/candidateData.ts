@@ -107,7 +107,7 @@ export const candidateData: CandidateData = {
 };
 
 export const formatCandidateExperience = (): string => {
-  const { name, email, phone, location, linkedin, skills, experience, education, keyProjects, certifications } =
+  const { name, email, phone, location, linkedin, skills, experience, education, keyProjects } =
     candidateData;
 
   const skillsText = `
@@ -143,12 +143,6 @@ ${exp.achievements.map((a) => `- ${a}`).join("\n")}`
         .join("\n")
     : "";
 
-  const certificationsText = certifications
-    ? certifications
-        .map((cert) => `- ${cert.name} — ${cert.issuer}${cert.year ? ` (${cert.year})` : ""}`)
-        .join("\n")
-    : "";
-
   return `**Name:** ${name}
 **Contact:** ${email} | ${phone} | ${location}
 **LinkedIn:** ${linkedin}
@@ -173,9 +167,6 @@ ${keyProjectsText}
 **Experience:**
 
 ${experienceText}
-
-**Certifications:**
-${certificationsText}
 
 **Education:**
 ${educationText}`;
