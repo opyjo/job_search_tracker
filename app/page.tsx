@@ -6,12 +6,15 @@ import ResumePreview from "./components/ResumePreview";
 import LoadingState from "./components/LoadingState";
 import TargetCompanies from "./components/TargetCompanies";
 import ApplicationTracker from "./components/ApplicationTracker";
+import CoverLetterForm from "./components/CoverLetterForm";
+import CoverLetterPreview from "./components/CoverLetterPreview";
 import Toast, { ToastItem, useToast } from "./components/Toast";
 import { ResumeResponse, ErrorResponse, APIResponse } from "@/lib/types";
+import { CoverLetterResponse } from "@/app/api/generate-cover-letter/route";
 import { candidateData } from "@/lib/candidateData";
 
 type AppState = "input" | "loading" | "result" | "error";
-type ActiveView = "tailor" | "companies" | "tracker";
+type ActiveView = "tailor" | "coverletter" | "companies" | "tracker";
 
 const isErrorResponse = (response: APIResponse): response is ErrorResponse => {
   return "error" in response;
@@ -21,6 +24,8 @@ export default function Home() {
   const [appState, setAppState] = useState<AppState>("input");
   const [activeView, setActiveView] = useState<ActiveView>("tailor");
   const [resumeData, setResumeData] = useState<ResumeResponse | null>(null);
+  const [coverLetterData, setCoverLetterData] = useState<CoverLetterResponse | null>(null);
+  const [coverLetterCompany, setCoverLetterCompany] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const { toasts, addToast, removeToast } = useToast();
 
@@ -62,7 +67,45 @@ export default function Home() {
   const handleReset = () => {
     setAppState("input");
     setResumeData(null);
+    setCoverLetterData(null);
+    setCoverLetterCompany("");
     setErrorMessage("");
+  };
+
+  const handleCoverLetterSubmit = async (companyName: string, whyThisCompany: string, jobDescription: string, companyMission?: string) => {
+    setAppState("loading");
+    setErrorMessage("");
+    setCoverLetterCompany(companyName);
+
+    try {
+      const response = await fetch("/api/generate-cover-letter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ companyName, whyThisCompany, jobDescription, companyMission }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        const error = data.error || "An unexpected error occurred";
+        setErrorMessage(error);
+        setAppState("error");
+        addToast(error, "error");
+        return;
+      }
+
+      setCoverLetterData(data as CoverLetterResponse);
+      setAppState("result");
+      addToast("Cover letter generated successfully!", "success");
+    } catch (error) {
+      console.error("Error:", error);
+      const message = "Failed to connect to the server. Please try again.";
+      setErrorMessage(message);
+      setAppState("error");
+      addToast(message, "error");
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
@@ -74,6 +117,7 @@ export default function Home() {
 
   const viewDescriptions: Record<ActiveView, string> = {
     tailor: "Paste a job description and get a tailored resume optimized for ATS systems and human recruiters.",
+    coverletter: "Generate a personalized cover letter tailored to the company and role.",
     companies: "Your curated list of target companies organized by priority and interview difficulty.",
     tracker: "Track your job applications, interview stages, and follow-up dates all in one place.",
   };
@@ -119,8 +163,8 @@ export default function Home() {
           {/* View Toggle */}
           <div className="inline-flex bg-slate-100 p-1 rounded-xl flex-wrap justify-center gap-1">
             <button
-              onClick={() => setActiveView("tailor")}
-              onKeyDown={(e) => handleKeyDown(e, () => setActiveView("tailor"))}
+              onClick={() => { setActiveView("tailor"); handleReset(); }}
+              onKeyDown={(e) => handleKeyDown(e, () => { setActiveView("tailor"); handleReset(); })}
               aria-label="Resume Tailor view"
               aria-selected={activeView === "tailor"}
               tabIndex={0}
@@ -134,7 +178,25 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
               <span className="hidden sm:inline">Resume Tailor</span>
-              <span className="sm:hidden">Tailor</span>
+              <span className="sm:hidden">Resume</span>
+            </button>
+            <button
+              onClick={() => { setActiveView("coverletter"); handleReset(); }}
+              onKeyDown={(e) => handleKeyDown(e, () => { setActiveView("coverletter"); handleReset(); })}
+              aria-label="Cover Letter view"
+              aria-selected={activeView === "coverletter"}
+              tabIndex={0}
+              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
+                        ${activeView === "coverletter"
+                          ? "bg-white text-slate-800 shadow-sm"
+                          : "text-slate-600 hover:text-slate-800"
+                        }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span className="hidden sm:inline">Cover Letter</span>
+              <span className="sm:hidden">Letter</span>
             </button>
             <button
               onClick={() => setActiveView("companies")}
@@ -243,6 +305,85 @@ export default function Home() {
                                rounded-xl shadow-lg shadow-amber-500/25
                                hover:from-amber-600 hover:to-orange-600
                                focus:outline-none focus:ring-4 focus:ring-amber-300
+                               transition-all duration-200"
+                      aria-label="Try again"
+                      tabIndex={0}
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeView === "coverletter" && (
+            <>
+              {appState === "input" && (
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
+                  {/* Candidate info badge */}
+                  <div className="flex items-center gap-3 mb-8 p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-bold">
+                      {candidateData.name.split(" ").map((n) => n[0]).join("")}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800">{candidateData.name}</p>
+                      <p className="text-sm text-slate-500">Generate a personalized cover letter</p>
+                    </div>
+                  </div>
+
+                  <CoverLetterForm onSubmit={handleCoverLetterSubmit} isLoading={false} />
+                </div>
+              )}
+
+              {appState === "loading" && (
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
+                  <LoadingState />
+                </div>
+              )}
+
+              {appState === "result" && coverLetterData && (
+                <CoverLetterPreview 
+                  data={coverLetterData}
+                  companyName={coverLetterCompany}
+                  onReset={handleReset}
+                  onToast={addToast}
+                />
+              )}
+
+              {appState === "error" && (
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-8 w-8 text-red-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        />
+                      </svg>
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">
+                      Something went wrong
+                    </h2>
+                    <p className="text-slate-600 mb-6 max-w-md mx-auto">
+                      {errorMessage}
+                    </p>
+                    <button
+                      onClick={handleReset}
+                      className="px-6 py-3 text-sm font-semibold text-white
+                               bg-gradient-to-r from-violet-500 to-purple-500
+                               rounded-xl shadow-lg shadow-violet-500/25
+                               hover:from-violet-600 hover:to-purple-600
+                               focus:outline-none focus:ring-4 focus:ring-violet-300
                                transition-all duration-200"
                       aria-label="Try again"
                       tabIndex={0}

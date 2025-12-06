@@ -1,27 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { COVER_LETTER_SYSTEM_PROMPT, formatCoverLetterUserMessage } from "@/lib/coverLetterPrompt";
-import { formatCandidateExperience } from "@/lib/candidateData";
+
+export interface CoverLetterParagraphs {
+  greeting: string;
+  opening_paragraph: string;
+  body_paragraph_1: string;
+  body_paragraph_2: string;
+  closing_paragraph: string;
+  signature: string;
+}
+
+export interface CoverLetterMetadata {
+  tone_used: "conversational" | "professional";
+  tone_reason: string;
+  key_points_addressed: string[];
+  company_specific_mentions: string[];
+}
 
 export interface CoverLetterResponse {
-  cover_letter: {
-    opening: string;
-    body: string;
-    company_fit: string;
-    closing: string;
-  };
-  full_text: string;
-  customization_notes: {
-    company_research_used: string;
-    key_achievements_highlighted: string[];
-    tone: string;
-    suggestions: string;
-  };
+  cover_letter: CoverLetterParagraphs;
+  metadata: CoverLetterMetadata;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { jobDescription, companyName } = await request.json();
+    const { companyName, whyThisCompany, jobDescription, companyMission } = await request.json();
+
+    if (!companyName || typeof companyName !== "string") {
+      return NextResponse.json(
+        { error: "Company name is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!whyThisCompany || typeof whyThisCompany !== "string") {
+      return NextResponse.json(
+        { error: "Please tell us why you want to work at this company" },
+        { status: 400 }
+      );
+    }
 
     if (!jobDescription || typeof jobDescription !== "string") {
       return NextResponse.json(
@@ -50,8 +68,7 @@ export async function POST(request: NextRequest) {
       apiKey,
     });
 
-    const candidateExperience = formatCandidateExperience();
-    const userMessage = formatCoverLetterUserMessage(jobDescription, candidateExperience, companyName);
+    const userMessage = formatCoverLetterUserMessage(companyName, whyThisCompany, jobDescription, companyMission);
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
@@ -98,6 +115,15 @@ export async function POST(request: NextRequest) {
     console.error("Error generating cover letter:", error);
     
     if (error instanceof Anthropic.APIError) {
+      if (error.status === 400) {
+        const errorMessage = String(error.message || "");
+        if (errorMessage.includes("credit balance")) {
+          return NextResponse.json(
+            { error: "Anthropic API credit balance is too low. Please add credits at https://console.anthropic.com/settings/billing" },
+            { status: 400 }
+          );
+        }
+      }
       if (error.status === 401) {
         return NextResponse.json(
           { error: "Invalid API key. Please check your ANTHROPIC_API_KEY." },
@@ -118,4 +144,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
