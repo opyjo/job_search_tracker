@@ -1,72 +1,93 @@
-export interface Experience {
+// ============================================
+// PROFESSION TYPES
+// ============================================
+
+export type ProfessionType = "developer" | "payroll";
+
+// ============================================
+// SKILL STRUCTURES BY PROFESSION
+// ============================================
+
+export interface DeveloperSkills {
+  languages: string;
+  frameworks_libraries: string;
+  architecture: string;
+  css: string;
+  tools: string;
+  testing: string;
+  methodologies: string;
+  design: string;
+  other: string;
+}
+
+export interface PayrollSkills {
+  payroll_systems: string;
+  hris_applications: string;
+  legislative_knowledge: string;
+  software_tools: string;
+  methodologies: string;
+  certifications: string;
+}
+
+export type CandidateSkills = DeveloperSkills | PayrollSkills;
+
+// ============================================
+// CANDIDATE DATA TYPES
+// ============================================
+
+export interface CandidateExperience {
   company: string;
   location: string;
   role: string;
   dates: string;
-  summary: string;
   achievements: string[];
 }
 
-export interface Education {
+export interface CandidateEducation {
   degree: string;
   institution: string;
   location?: string;
 }
 
-export interface Skills {
-  languages: string[];
-  frameworks_libraries: string[];
-  architecture: string[];
-  tools_platforms: string[];
-  methodologies: string[];
-}
-
-export interface KeyProject {
+export interface CandidateKeyProject {
   name: string;
   description: string;
   technologies: string[];
   impact?: string;
 }
 
-export interface TailoredResume {
-  professional_summary: string;
-  highlights_of_qualifications?: string[];
-  skills: Skills;
-  key_projects?: KeyProject[];
-  experience: Experience[];
-  education: Education[];
+// Base candidate interface
+interface BaseCandidateData {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  location: string;
+  linkedin: string;
+  yearsOfExperience: string;
+  professionalTitle: string;
+  experience: CandidateExperience[];
+  education: CandidateEducation[];
+  keyProjects?: CandidateKeyProject[];
 }
 
-export interface ATSBreakdown {
-  keywords_match: number;
-  skills_match: number;
-  experience_relevance: number;
-  formatting_score: number;
+// Developer-specific candidate
+export interface DeveloperCandidateData extends BaseCandidateData {
+  professionType: "developer";
+  skills: DeveloperSkills;
 }
 
-export interface OptimizationNotes {
-  ats_score: number;
-  ats_breakdown?: ATSBreakdown;
-  keywords_incorporated: string[];
-  keywords_missing?: string[];
-  skills_highlighted: string[];
-  experience_reordered: boolean;
-  match_score: "High" | "Medium" | "Low";
-  suggestions: string;
+// Payroll-specific candidate
+export interface PayrollCandidateData extends BaseCandidateData {
+  professionType: "payroll";
+  skills: PayrollSkills;
 }
 
-export interface ResumeResponse {
-  tailored_resume: TailoredResume;
-  optimization_notes: OptimizationNotes;
-}
+// Union type for all candidates
+export type CandidateData = DeveloperCandidateData | PayrollCandidateData;
 
-export interface ErrorResponse {
-  error: string;
-}
-
-export type APIResponse = ResumeResponse | ErrorResponse;
-
-export interface CandidateData {
+// Legacy type alias for backward compatibility
+export type LegacyCandidateData = {
   name: string;
   email: string;
   phone: string;
@@ -100,5 +121,103 @@ export interface CandidateData {
     technologies: string[];
     impact?: string;
   }[];
+};
+
+// ============================================
+// TAILORED RESUME TYPES
+// ============================================
+
+export interface Experience {
+  company: string;
+  location: string;
+  role: string;
+  dates: string;
+  summary: string;
+  achievements: string[];
 }
 
+export interface Education {
+  degree: string;
+  institution: string;
+  location?: string;
+}
+
+// Flexible skills structure for API response
+export interface Skills {
+  languages?: string[];
+  frameworks_libraries?: string[];
+  architecture?: string[];
+  tools_platforms?: string[];
+  methodologies?: string[];
+  // Payroll-specific categories
+  payroll_systems?: string[];
+  hris_applications?: string[];
+  legislative_knowledge?: string[];
+  software_tools?: string[];
+  certifications?: string[];
+}
+
+export interface KeyProject {
+  name: string;
+  description: string;
+  technologies: string[];
+  impact?: string;
+}
+
+export interface TailoredResume {
+  professional_summary: string;
+  highlights_of_qualifications?: string[];
+  skills: Skills;
+  key_projects?: KeyProject[];
+  experience: Experience[];
+  education: Education[];
+}
+
+// ============================================
+// API RESPONSE TYPES
+// ============================================
+
+export interface ATSBreakdown {
+  keywords_match: number;
+  skills_match: number;
+  experience_relevance: number;
+  formatting_score: number;
+}
+
+export interface OptimizationNotes {
+  ats_score: number;
+  ats_breakdown?: ATSBreakdown;
+  keywords_incorporated: string[];
+  keywords_missing?: string[];
+  skills_highlighted: string[];
+  experience_reordered: boolean;
+  match_score: "High" | "Medium" | "Low";
+  suggestions: string;
+}
+
+export interface ResumeResponse {
+  tailored_resume: TailoredResume;
+  optimization_notes: OptimizationNotes;
+}
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export type APIResponse = ResumeResponse | ErrorResponse;
+
+// ============================================
+// HELPER TYPE GUARDS
+// ============================================
+
+export const isDeveloperCandidate = (
+  candidate: CandidateData
+): candidate is DeveloperCandidateData => {
+  return candidate.professionType === "developer";
+};
+
+export const isPayrollCandidate = (
+  candidate: CandidateData
+): candidate is PayrollCandidateData => {
+  return candidate.professionType === "payroll";
+};

@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { ResumeResponse } from "@/lib/types";
+import { ResumeResponse, CandidateData, isDeveloperCandidate } from "@/lib/types";
 import { generateResumeDocx } from "@/lib/generateDocx";
 import { generateResumePdf } from "@/lib/generatePdf";
 import { saveAs } from "file-saver";
-import { candidateData } from "@/lib/candidateData";
+import { candidateData as defaultCandidate } from "@/lib/candidateData";
 
 interface ResumePreviewProps {
   data: ResumeResponse;
   onReset: () => void;
   onToast?: (message: string, type: "success" | "error" | "info") => void;
+  candidate?: CandidateData;
 }
 
-const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
+const ResumePreview = ({ data, onReset, onToast, candidate = defaultCandidate }: ResumePreviewProps) => {
   const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [activeTab, setActiveTab] = useState<"preview" | "optimization">("preview");
@@ -24,8 +25,8 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
   const handleDownloadDocx = async () => {
     setIsDownloadingDocx(true);
     try {
-      const blob = await generateResumeDocx(tailored_resume);
-      const fileName = `${candidateData.name.replace(/\s+/g, "_")}_Resume_${new Date().toISOString().split("T")[0]}.docx`;
+      const blob = await generateResumeDocx(tailored_resume, candidate);
+      const fileName = `${candidate.name.replace(/\s+/g, "_").replace(/\(.*?\)/g, "")}_Resume_${new Date().toISOString().split("T")[0]}.docx`;
       saveAs(blob, fileName);
       onToast?.("Word document downloaded!", "success");
     } catch (error) {
@@ -39,8 +40,8 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
     try {
-      const blob = generateResumePdf(tailored_resume);
-      const fileName = `${candidateData.name.replace(/\s+/g, "_")}_Resume_${new Date().toISOString().split("T")[0]}.pdf`;
+      const blob = generateResumePdf(tailored_resume, candidate);
+      const fileName = `${candidate.name.replace(/\s+/g, "_").replace(/\(.*?\)/g, "")}_Resume_${new Date().toISOString().split("T")[0]}.pdf`;
       saveAs(blob, fileName);
       onToast?.("PDF downloaded!", "success");
     } catch (error) {
@@ -77,8 +78,11 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
   const formatResumeAsText = (): string => {
     const { professional_summary, highlights_of_qualifications, skills, experience, education } = tailored_resume;
     
-    let text = `${candidateData.name}\n`;
-    text += `${candidateData.email} | ${candidateData.phone} | ${candidateData.location} | ${candidateData.linkedin}\n\n`;
+    const contactParts = [candidate.email, candidate.phone, candidate.location];
+    if (candidate.linkedin) contactParts.push(candidate.linkedin);
+    
+    let text = `${candidate.name}\n`;
+    text += `${contactParts.join(" | ")}\n\n`;
     
     text += `PROFESSIONAL SUMMARY\n${professional_summary}\n\n`;
     
@@ -90,11 +94,18 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
       text += `\n`;
     }
     
-    text += `TECHNICAL SKILLS\n`;
+    text += `SKILLS\n`;
+    // Developer skills
     if (skills.languages?.length) text += `Languages: ${skills.languages.join(", ")}\n`;
     if (skills.frameworks_libraries?.length) text += `Frameworks & Libraries: ${skills.frameworks_libraries.join(", ")}\n`;
     if (skills.architecture?.length) text += `Architecture: ${skills.architecture.join(", ")}\n`;
     if (skills.tools_platforms?.length) text += `Tools & Platforms: ${skills.tools_platforms.join(", ")}\n`;
+    // Payroll skills
+    if (skills.payroll_systems?.length) text += `Payroll Systems: ${skills.payroll_systems.join(", ")}\n`;
+    if (skills.hris_applications?.length) text += `HRIS Applications: ${skills.hris_applications.join(", ")}\n`;
+    if (skills.legislative_knowledge?.length) text += `Legislative Knowledge: ${skills.legislative_knowledge.join(", ")}\n`;
+    if (skills.software_tools?.length) text += `Software Tools: ${skills.software_tools.join(", ")}\n`;
+    // Common
     if (skills.methodologies?.length) text += `Methodologies: ${skills.methodologies.join(", ")}\n`;
     text += `\n`;
     
@@ -137,6 +148,21 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
     }
   };
 
+  // Get skill categories based on what's in the response
+  const getSkillsForCopy = () => {
+    const parts = [];
+    if (tailored_resume.skills.languages?.length) parts.push(`Languages: ${tailored_resume.skills.languages.join(", ")}`);
+    if (tailored_resume.skills.frameworks_libraries?.length) parts.push(`Frameworks & Libraries: ${tailored_resume.skills.frameworks_libraries.join(", ")}`);
+    if (tailored_resume.skills.architecture?.length) parts.push(`Architecture: ${tailored_resume.skills.architecture.join(", ")}`);
+    if (tailored_resume.skills.tools_platforms?.length) parts.push(`Tools & Platforms: ${tailored_resume.skills.tools_platforms.join(", ")}`);
+    if (tailored_resume.skills.payroll_systems?.length) parts.push(`Payroll Systems: ${tailored_resume.skills.payroll_systems.join(", ")}`);
+    if (tailored_resume.skills.hris_applications?.length) parts.push(`HRIS Applications: ${tailored_resume.skills.hris_applications.join(", ")}`);
+    if (tailored_resume.skills.legislative_knowledge?.length) parts.push(`Legislative Knowledge: ${tailored_resume.skills.legislative_knowledge.join(", ")}`);
+    if (tailored_resume.skills.software_tools?.length) parts.push(`Software Tools: ${tailored_resume.skills.software_tools.join(", ")}`);
+    if (tailored_resume.skills.methodologies?.length) parts.push(`Methodologies: ${tailored_resume.skills.methodologies.join(", ")}`);
+    return parts.filter(Boolean).join("\n");
+  };
+
   const CopyButton = ({ section, content }: { section: string; content: string }) => (
     <button
       onClick={() => handleCopySection(section, content)}
@@ -155,6 +181,87 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
       )}
     </button>
   );
+
+  // Render skills based on candidate type
+  const renderSkills = () => {
+    const isDev = isDeveloperCandidate(candidate);
+    
+    if (isDev) {
+      return (
+        <>
+          {tailored_resume.skills.languages && tailored_resume.skills.languages.length > 0 && (
+            <p className="text-slate-700">
+              <span className="font-semibold">Languages:</span>{" "}
+              {tailored_resume.skills.languages.join(", ")}
+            </p>
+          )}
+          {tailored_resume.skills.frameworks_libraries && tailored_resume.skills.frameworks_libraries.length > 0 && (
+            <p className="text-slate-700">
+              <span className="font-semibold">Frameworks & Libraries:</span>{" "}
+              {tailored_resume.skills.frameworks_libraries.join(", ")}
+            </p>
+          )}
+          {tailored_resume.skills.architecture && tailored_resume.skills.architecture.length > 0 && (
+            <p className="text-slate-700">
+              <span className="font-semibold">Architecture:</span>{" "}
+              {tailored_resume.skills.architecture.join(", ")}
+            </p>
+          )}
+          {tailored_resume.skills.tools_platforms && tailored_resume.skills.tools_platforms.length > 0 && (
+            <p className="text-slate-700">
+              <span className="font-semibold">Tools & Platforms:</span>{" "}
+              {tailored_resume.skills.tools_platforms.join(", ")}
+            </p>
+          )}
+          {tailored_resume.skills.methodologies && tailored_resume.skills.methodologies.length > 0 && (
+            <p className="text-slate-700">
+              <span className="font-semibold">Methodologies:</span>{" "}
+              {tailored_resume.skills.methodologies.join(", ")}
+            </p>
+          )}
+        </>
+      );
+    }
+
+    // Payroll candidate
+    return (
+      <>
+        {tailored_resume.skills.payroll_systems && tailored_resume.skills.payroll_systems.length > 0 && (
+          <p className="text-slate-700">
+            <span className="font-semibold">Payroll Systems:</span>{" "}
+            {tailored_resume.skills.payroll_systems.join(", ")}
+          </p>
+        )}
+        {tailored_resume.skills.hris_applications && tailored_resume.skills.hris_applications.length > 0 && (
+          <p className="text-slate-700">
+            <span className="font-semibold">HRIS Applications:</span>{" "}
+            {tailored_resume.skills.hris_applications.join(", ")}
+          </p>
+        )}
+        {tailored_resume.skills.legislative_knowledge && tailored_resume.skills.legislative_knowledge.length > 0 && (
+          <p className="text-slate-700">
+            <span className="font-semibold">Legislative Knowledge:</span>{" "}
+            {tailored_resume.skills.legislative_knowledge.join(", ")}
+          </p>
+        )}
+        {tailored_resume.skills.software_tools && tailored_resume.skills.software_tools.length > 0 && (
+          <p className="text-slate-700">
+            <span className="font-semibold">Software Tools:</span>{" "}
+            {tailored_resume.skills.software_tools.join(", ")}
+          </p>
+        )}
+        {tailored_resume.skills.methodologies && tailored_resume.skills.methodologies.length > 0 && (
+          <p className="text-slate-700">
+            <span className="font-semibold">Methodologies:</span>{" "}
+            {tailored_resume.skills.methodologies.join(", ")}
+          </p>
+        )}
+      </>
+    );
+  };
+
+  const contactParts = [candidate.email, candidate.phone, candidate.location];
+  if (candidate.linkedin) contactParts.push(candidate.linkedin);
 
   return (
     <div className="w-full">
@@ -387,10 +494,10 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
           {/* Resume Header */}
           <div className="text-center border-b border-slate-200 pb-6 mb-6">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">
-              {candidateData.name}
+              {candidate.name}
             </h1>
             <p className="text-slate-600 text-sm">
-              {candidateData.email} | {candidateData.phone} | {candidateData.location} | {candidateData.linkedin}
+              {contactParts.join(" | ")}
             </p>
           </div>
           
@@ -438,46 +545,11 @@ const ResumePreview = ({ data, onReset, onToast }: ResumePreviewProps) => {
               </h2>
               <CopyButton 
                 section="Skills" 
-                content={[
-                  tailored_resume.skills.languages?.length ? `Languages: ${tailored_resume.skills.languages.join(", ")}` : "",
-                  tailored_resume.skills.frameworks_libraries?.length ? `Frameworks & Libraries: ${tailored_resume.skills.frameworks_libraries.join(", ")}` : "",
-                  tailored_resume.skills.architecture?.length ? `Architecture: ${tailored_resume.skills.architecture.join(", ")}` : "",
-                  tailored_resume.skills.tools_platforms?.length ? `Tools & Platforms: ${tailored_resume.skills.tools_platforms.join(", ")}` : "",
-                  tailored_resume.skills.methodologies?.length ? `Methodologies: ${tailored_resume.skills.methodologies.join(", ")}` : "",
-                ].filter(Boolean).join("\n")} 
+                content={getSkillsForCopy()} 
               />
             </div>
             <div className="space-y-2">
-              {tailored_resume.skills.languages?.length > 0 && (
-                <p className="text-slate-700">
-                  <span className="font-semibold">Languages:</span>{" "}
-                  {tailored_resume.skills.languages.join(", ")}
-                </p>
-              )}
-              {tailored_resume.skills.frameworks_libraries?.length > 0 && (
-                <p className="text-slate-700">
-                  <span className="font-semibold">Frameworks & Libraries:</span>{" "}
-                  {tailored_resume.skills.frameworks_libraries.join(", ")}
-                </p>
-              )}
-              {tailored_resume.skills.architecture?.length > 0 && (
-                <p className="text-slate-700">
-                  <span className="font-semibold">Architecture:</span>{" "}
-                  {tailored_resume.skills.architecture.join(", ")}
-                </p>
-              )}
-              {tailored_resume.skills.tools_platforms?.length > 0 && (
-                <p className="text-slate-700">
-                  <span className="font-semibold">Tools & Platforms:</span>{" "}
-                  {tailored_resume.skills.tools_platforms.join(", ")}
-                </p>
-              )}
-              {tailored_resume.skills.methodologies?.length > 0 && (
-                <p className="text-slate-700">
-                  <span className="font-semibold">Methodologies:</span>{" "}
-                  {tailored_resume.skills.methodologies.join(", ")}
-                </p>
-              )}
+              {renderSkills()}
             </div>
           </section>
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { COVER_LETTER_SYSTEM_PROMPT, formatCoverLetterUserMessage } from "@/lib/coverLetterPrompt";
+import { generateCoverLetterSystemPrompt, formatCoverLetterUserMessage } from "@/lib/coverLetterPrompt";
+import { getCandidateById, candidateData as defaultCandidate } from "@/lib/candidateData";
 
 export interface CoverLetterParagraphs {
   greeting: string;
@@ -25,7 +26,7 @@ export interface CoverLetterResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { companyName, whyThisCompany, jobDescription, companyMission } = await request.json();
+    const { companyName, whyThisCompany, jobDescription, companyMission, candidateId } = await request.json();
 
     if (!companyName || typeof companyName !== "string") {
       return NextResponse.json(
@@ -55,6 +56,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get candidate data - use provided ID or default
+    const candidate = candidateId ? getCandidateById(candidateId) : defaultCandidate;
+    
+    if (!candidate) {
+      return NextResponse.json(
+        { error: "Invalid candidate ID" },
+        { status: 400 }
+      );
+    }
+
     const apiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!apiKey) {
@@ -68,13 +79,15 @@ export async function POST(request: NextRequest) {
       apiKey,
     });
 
+    // Generate dynamic system prompt based on candidate
+    const systemPrompt = generateCoverLetterSystemPrompt(candidate);
     const userMessage = formatCoverLetterUserMessage(companyName, whyThisCompany, jobDescription, companyMission);
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 2048,
       temperature: 0.4,
-      system: COVER_LETTER_SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [
         {
           role: "user",

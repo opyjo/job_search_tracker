@@ -1,28 +1,72 @@
-import {
-  Document,
-  Paragraph,
-  TextRun,
-  AlignmentType,
-  Packer,
-} from "docx";
+import { Document, Paragraph, TextRun, AlignmentType, Packer } from "docx";
 import { CoverLetterParagraphs } from "@/app/api/generate-cover-letter/route";
-import { candidateData } from "./candidateData";
+import { CandidateData } from "./types";
+import { candidateData as defaultCandidate } from "./candidateData";
 
 const FONT_FAMILY = "Calibri";
-const NAME_SIZE = 32;       // 16pt
-const CONTACT_SIZE = 20;    // 10pt
-const BODY_SIZE = 22;       // 11pt
+const NAME_SIZE = 32; // 16pt
+const CONTACT_SIZE = 20; // 10pt
+const BODY_SIZE = 22; // 11pt
 
 export const generateCoverLetterDocx = async (
   coverLetter: CoverLetterParagraphs,
-  companyName: string
+  companyName: string,
+  candidate: CandidateData = defaultCandidate
 ): Promise<Blob> => {
-  const { name, email, phone, location, linkedin } = candidateData;
+  const { name, email, phone, location, linkedin } = candidate;
   const today = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  // Build contact paragraphs
+  const contactParagraphs = [
+    new Paragraph({
+      alignment: AlignmentType.LEFT,
+      spacing: { after: 40 },
+      children: [
+        new TextRun({
+          text: `${email} | ${phone} | ${location}`,
+          size: CONTACT_SIZE,
+          font: FONT_FAMILY,
+          color: "666666",
+        }),
+      ],
+    }),
+  ];
+
+  // Only add LinkedIn paragraph if available
+  if (linkedin) {
+    contactParagraphs.push(
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        spacing: { after: 400 },
+        children: [
+          new TextRun({
+            text: linkedin,
+            size: CONTACT_SIZE,
+            font: FONT_FAMILY,
+            color: "666666",
+          }),
+        ],
+      })
+    );
+  } else {
+    // Add spacing after contact info
+    contactParagraphs[0] = new Paragraph({
+      alignment: AlignmentType.LEFT,
+      spacing: { after: 400 },
+      children: [
+        new TextRun({
+          text: `${email} | ${phone} | ${location}`,
+          size: CONTACT_SIZE,
+          font: FONT_FAMILY,
+          color: "666666",
+        }),
+      ],
+    });
+  }
 
   const doc = new Document({
     sections: [
@@ -30,7 +74,7 @@ export const generateCoverLetterDocx = async (
         properties: {
           page: {
             margin: {
-              top: 1440,  // 1 inch
+              top: 1440, // 1 inch
               right: 1440,
               bottom: 1440,
               left: 1440,
@@ -53,30 +97,7 @@ export const generateCoverLetterDocx = async (
           }),
 
           // Contact Info
-          new Paragraph({
-            alignment: AlignmentType.LEFT,
-            spacing: { after: 40 },
-            children: [
-              new TextRun({
-                text: `${email} | ${phone} | ${location}`,
-                size: CONTACT_SIZE,
-                font: FONT_FAMILY,
-                color: "666666",
-              }),
-            ],
-          }),
-          new Paragraph({
-            alignment: AlignmentType.LEFT,
-            spacing: { after: 400 },
-            children: [
-              new TextRun({
-                text: linkedin,
-                size: CONTACT_SIZE,
-                font: FONT_FAMILY,
-                color: "666666",
-              }),
-            ],
-          }),
+          ...contactParagraphs,
 
           // Date
           new Paragraph({
@@ -182,4 +203,3 @@ export const generateCoverLetterDocx = async (
 
   return await Packer.toBlob(doc);
 };
-

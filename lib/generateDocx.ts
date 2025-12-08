@@ -8,8 +8,8 @@ import {
   TabStopType,
   Packer,
 } from "docx";
-import { TailoredResume } from "./types";
-import { candidateData } from "./candidateData";
+import { TailoredResume, CandidateData, isDeveloperCandidate } from "./types";
+import { candidateData as defaultCandidate } from "./candidateData";
 
 const FONT_FAMILY = "Calibri";
 const NAME_SIZE = 40;        // 20pt - Name at top
@@ -19,9 +19,15 @@ const BODY_SIZE = 22;        // 11pt - Body text and bullets
 const CONTACT_SIZE = 20;     // 10pt - Contact info
 
 export const generateResumeDocx = async (
-  resume: TailoredResume
+  resume: TailoredResume,
+  candidate: CandidateData = defaultCandidate
 ): Promise<Blob> => {
-  const { name, email, phone, location, linkedin } = candidateData;
+  const { name, email, phone, location, linkedin } = candidate;
+  
+  // Build contact string
+  const contactParts = [email, phone, location];
+  if (linkedin) contactParts.push(linkedin);
+  const contactString = contactParts.join(" | ");
 
   const doc = new Document({
     sections: [
@@ -57,7 +63,7 @@ export const generateResumeDocx = async (
             spacing: { after: 200 },
             children: [
               new TextRun({
-                text: `${email} | ${phone} | ${location} | ${linkedin}`,
+                text: contactString,
                 size: CONTACT_SIZE,
                 font: FONT_FAMILY,
               }),
@@ -86,8 +92,8 @@ export const generateResumeDocx = async (
             : []),
 
           // Skills Section
-          createSectionHeading("TECHNICAL SKILLS"),
-          ...createSkillsSection(resume.skills),
+          createSectionHeading("SKILLS"),
+          ...createSkillsSection(resume.skills, candidate),
 
           // Key Projects Section
           ...(resume.key_projects && resume.key_projects.length > 0
@@ -159,16 +165,13 @@ const createHighlightsSection = (highlights: string[]): Paragraph[] => {
   return paragraphs;
 };
 
-const createSkillsSection = (skills: TailoredResume["skills"]): Paragraph[] => {
+const createSkillsSection = (
+  skills: TailoredResume["skills"],
+  candidate: CandidateData
+): Paragraph[] => {
   const paragraphs: Paragraph[] = [];
 
-  const skillCategories = [
-    { label: "Languages", items: skills.languages },
-    { label: "Frameworks & Libraries", items: skills.frameworks_libraries },
-    { label: "Architecture", items: skills.architecture },
-    { label: "Tools & Platforms", items: skills.tools_platforms },
-    { label: "Methodologies", items: skills.methodologies },
-  ];
+  const skillCategories = getSkillCategories(skills, candidate);
 
   skillCategories.forEach((category) => {
     if (category.items && category.items.length > 0) {
@@ -418,3 +421,35 @@ const createEducationSection = (
   return paragraphs;
 };
 
+// ============================================
+// HELPER FUNCTION FOR SKILL CATEGORIES
+// ============================================
+
+interface SkillCategory {
+  label: string;
+  items: string[] | undefined;
+}
+
+const getSkillCategories = (
+  skills: TailoredResume["skills"],
+  candidate: CandidateData
+): SkillCategory[] => {
+  if (isDeveloperCandidate(candidate)) {
+    return [
+      { label: "Languages", items: skills.languages },
+      { label: "Frameworks & Libraries", items: skills.frameworks_libraries },
+      { label: "Architecture", items: skills.architecture },
+      { label: "Tools & Platforms", items: skills.tools_platforms },
+      { label: "Methodologies", items: skills.methodologies },
+    ];
+  }
+
+  // Payroll candidate
+  return [
+    { label: "Payroll Systems", items: skills.payroll_systems },
+    { label: "HRIS Applications", items: skills.hris_applications },
+    { label: "Legislative Knowledge", items: skills.legislative_knowledge },
+    { label: "Software Tools", items: skills.software_tools },
+    { label: "Methodologies", items: skills.methodologies },
+  ];
+};

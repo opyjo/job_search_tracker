@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { SYSTEM_PROMPT, formatUserMessage } from "@/lib/systemPrompt";
-import { formatCandidateExperience } from "@/lib/candidateData";
+import { generateSystemPrompt, formatUserMessage } from "@/lib/systemPrompt";
+import { formatCandidateExperience, getCandidateById, candidateData as defaultCandidate } from "@/lib/candidateData";
 import { APIResponse } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
-    const { jobDescription } = await request.json();
+    const { jobDescription, candidateId } = await request.json();
 
     if (!jobDescription || typeof jobDescription !== "string") {
       return NextResponse.json(
@@ -18,6 +18,16 @@ export async function POST(request: NextRequest) {
     if (jobDescription.trim().length < 50) {
       return NextResponse.json(
         { error: "Job description seems too short. Please paste the full job posting." },
+        { status: 400 }
+      );
+    }
+
+    // Get candidate data - use provided ID or default
+    const candidate = candidateId ? getCandidateById(candidateId) : defaultCandidate;
+    
+    if (!candidate) {
+      return NextResponse.json(
+        { error: "Invalid candidate ID" },
         { status: 400 }
       );
     }
@@ -35,14 +45,16 @@ export async function POST(request: NextRequest) {
       apiKey,
     });
 
-    const candidateExperience = formatCandidateExperience();
+    // Generate dynamic system prompt based on candidate
+    const systemPrompt = generateSystemPrompt(candidate);
+    const candidateExperience = formatCandidateExperience(candidate);
     const userMessage = formatUserMessage(jobDescription, candidateExperience);
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 4096,
       temperature: 0.3,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [
         {
           role: "user",
@@ -115,4 +127,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

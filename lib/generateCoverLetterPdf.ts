@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import { CoverLetterParagraphs } from "@/app/api/generate-cover-letter/route";
-import { candidateData } from "./candidateData";
+import { CandidateData } from "./types";
+import { candidateData as defaultCandidate } from "./candidateData";
 
 const FONT_SIZE = {
   name: 16,
@@ -24,9 +25,10 @@ const CONTENT_WIDTH = PAGE_WIDTH - MARGIN.left - MARGIN.right;
 
 export const generateCoverLetterPdf = (
   coverLetter: CoverLetterParagraphs,
-  companyName: string
+  companyName: string,
+  candidate: CandidateData = defaultCandidate
 ): Blob => {
-  const { name, email, phone, location, linkedin } = candidateData;
+  const { name, email, phone, location, linkedin } = candidate;
   const doc = new jsPDF();
 
   let yPos = MARGIN.top;
@@ -47,10 +49,10 @@ export const generateCoverLetterPdf = (
     doc.setFontSize(fontSize);
     doc.setTextColor(color);
     doc.setFont("helvetica", isBold ? "bold" : "normal");
-    
+
     const lines = doc.splitTextToSize(text, CONTENT_WIDTH);
     const lineHeight = fontSize * 0.5;
-    
+
     lines.forEach((line: string) => {
       if (yPos + lineHeight > 280) {
         doc.addPage();
@@ -74,8 +76,13 @@ export const generateCoverLetterPdf = (
   doc.setTextColor(COLORS.gray);
   doc.text(`${email} | ${phone} | ${location}`, MARGIN.left, yPos);
   yPos += 5;
-  doc.text(linkedin, MARGIN.left, yPos);
-  yPos += 15;
+
+  // Only show LinkedIn if available
+  if (linkedin) {
+    doc.text(linkedin, MARGIN.left, yPos);
+    yPos += 5;
+  }
+  yPos += 10;
 
   // Date
   doc.setFontSize(FONT_SIZE.body);
@@ -113,4 +120,3 @@ export const generateCoverLetterPdf = (
   // Return as blob
   return doc.output("blob");
 };
-

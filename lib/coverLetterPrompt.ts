@@ -1,6 +1,21 @@
-import { candidateData } from "./candidateData";
+import { CandidateData, isDeveloperCandidate, isPayrollCandidate } from "./types";
+import { candidateData as defaultCandidate } from "./candidateData";
 
-export const COVER_LETTER_SYSTEM_PROMPT = `You are an expert career coach and professional writer with 15 years of experience crafting compelling cover letters that land interviews. Your letters are personalized, genuine, and professionally tailored.
+// ============================================
+// DYNAMIC COVER LETTER PROMPT GENERATOR
+// ============================================
+
+export const generateCoverLetterSystemPrompt = (candidate: CandidateData): string => {
+  const skillsSummary = isDeveloperCandidate(candidate)
+    ? `${candidate.skills.languages}, ${candidate.skills.frameworks_libraries}`
+    : `${candidate.skills.payroll_systems}, ${candidate.skills.hris_applications}`;
+
+  const keyAchievements = candidate.experience[0].achievements.slice(0, 5);
+  const professionDescription = isDeveloperCandidate(candidate)
+    ? "front-end development"
+    : "payroll management and system implementation";
+
+  return `You are an expert career coach and professional writer with 15 years of experience crafting compelling cover letters that land interviews. Your letters are personalized, genuine, and professionally tailored.
 
 ## Your Task
 
@@ -103,27 +118,23 @@ Return a JSON object with this structure:
 
 ## Candidate Information
 
-**Name:** ${candidateData.name}
-**Email:** ${candidateData.email}
-**Phone:** ${candidateData.phone}
-**Location:** ${candidateData.location}
+**Name:** ${candidate.name}
+**Email:** ${candidate.email}
+**Phone:** ${candidate.phone}
+**Location:** ${candidate.location}
 
-**Key Skills:** ${candidateData.skills.languages}, ${candidateData.skills.frameworks_libraries}
+**Key Skills:** ${skillsSummary}
 
-**Current/Recent Role:** ${candidateData.experience[0].role} at ${candidateData.experience[0].company}
+**Current/Recent Role:** ${candidate.experience[0].role} at ${candidate.experience[0].company}
 
 **Key Achievements:**
-${candidateData.experience[0].achievements.slice(0, 5).map(a => `- ${a}`).join('\n')}
+${keyAchievements.map(a => `- ${a}`).join('\n')}
 
-**Years of Experience:** 7+ years in front-end development
+**Years of Experience:** ${candidate.yearsOfExperience} years in ${professionDescription}
 
 ## Example Openings
 
-**Conversational (for startups/tech):**
-"When I saw that [Company] is building [specific product/feature], I immediately thought of my work at Bell Canada where I architected similar solutions. Your mission to [company mission] aligns perfectly with why I got into software development."
-
-**Professional (for enterprises):**
-"[Company]'s commitment to [specific value/initiative] resonates deeply with my experience delivering enterprise-scale solutions at Bell Canada. I am excited to bring my expertise in [relevant skill] to your [specific team/project]."
+${generateExampleOpenings(candidate)}
 
 ## Edge Cases
 
@@ -132,6 +143,34 @@ ${candidateData.experience[0].achievements.slice(0, 5).map(a => `- ${a}`).join('
 2. **If the job description is minimal:** Focus more on the candidate's transferable skills and general value proposition.
 
 3. **If company type is unclear:** Default to professional tone with some warmth.`;
+};
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+const generateExampleOpenings = (candidate: CandidateData): string => {
+  const currentCompany = candidate.experience[0].company;
+  const currentRole = candidate.experience[0].role;
+
+  if (isDeveloperCandidate(candidate)) {
+    return `**Conversational (for startups/tech):**
+"When I saw that [Company] is building [specific product/feature], I immediately thought of my work at ${currentCompany} where I architected similar solutions. Your mission to [company mission] aligns perfectly with why I got into software development."
+
+**Professional (for enterprises):**
+"[Company]'s commitment to [specific value/initiative] resonates deeply with my experience delivering enterprise-scale solutions at ${currentCompany}. I am excited to bring my expertise in [relevant skill] to your [specific team/project]."`;
+  }
+
+  return `**Conversational (for modern companies):**
+"When I learned about [Company]'s approach to [specific HR/payroll initiative], I was immediately drawn to the opportunity. My experience implementing payroll systems at ${currentCompany} has prepared me well to contribute to your team's success."
+
+**Professional (for enterprises/healthcare):**
+"[Company]'s commitment to [specific value/compliance standard] aligns closely with my experience ensuring payroll compliance at ${currentCompany}. I am confident that my expertise in ${candidate.professionType === "payroll" ? "payroll system implementation and legislative compliance" : "technical solutions"} would be valuable to your organization."`;
+};
+
+// ============================================
+// FORMAT USER MESSAGE
+// ============================================
 
 export const formatCoverLetterUserMessage = (
   companyName: string,
@@ -160,3 +199,9 @@ ${jobDescription}
 
 Generate a personalized cover letter for this specific company and role. The letter should feel genuine and tailored, not templated. Use my actual experience and connect it to their requirements.${companyMission ? " Reference their mission/vision naturally in the letter to show genuine alignment." : ""} Return the response as a JSON object following the output format specified in your instructions.`;
 };
+
+// ============================================
+// LEGACY EXPORT (for backward compatibility)
+// ============================================
+
+export const COVER_LETTER_SYSTEM_PROMPT = generateCoverLetterSystemPrompt(defaultCandidate);

@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
-import { TailoredResume } from "./types";
-import { candidateData } from "./candidateData";
+import { TailoredResume, CandidateData, isDeveloperCandidate } from "./types";
+import { candidateData as defaultCandidate } from "./candidateData";
 
 const FONT_SIZE = {
   name: 18,
@@ -25,8 +25,11 @@ const MARGIN = {
 const PAGE_WIDTH = 210; // A4 width in mm
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN.left - MARGIN.right;
 
-export const generateResumePdf = (resume: TailoredResume): Blob => {
-  const { name, email, phone, location, linkedin } = candidateData;
+export const generateResumePdf = (
+  resume: TailoredResume,
+  candidate: CandidateData = defaultCandidate
+): Blob => {
+  const { name, email, phone, location, linkedin } = candidate;
   const doc = new jsPDF();
 
   let yPos = MARGIN.top;
@@ -92,7 +95,9 @@ export const generateResumePdf = (resume: TailoredResume): Blob => {
   doc.setFontSize(FONT_SIZE.small);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(COLORS.gray);
-  const contactText = `${email} | ${phone} | ${location} | ${linkedin}`;
+  const contactParts = [email, phone, location];
+  if (linkedin) contactParts.push(linkedin);
+  const contactText = contactParts.join(" | ");
   const contactWidth = doc.getTextWidth(contactText);
   doc.text(contactText, (PAGE_WIDTH - contactWidth) / 2, yPos);
   yPos += 10;
@@ -129,16 +134,10 @@ export const generateResumePdf = (resume: TailoredResume): Blob => {
     yPos += 2;
   }
 
-  // Technical Skills
-  addSectionHeading("Technical Skills");
+  // Skills Section - Dynamic based on candidate type
+  addSectionHeading("Skills");
   
-  const skillCategories = [
-    { label: "Languages", items: resume.skills.languages },
-    { label: "Frameworks & Libraries", items: resume.skills.frameworks_libraries },
-    { label: "Architecture", items: resume.skills.architecture },
-    { label: "Tools & Platforms", items: resume.skills.tools_platforms },
-    { label: "Methodologies", items: resume.skills.methodologies },
-  ];
+  const skillCategories = getSkillCategories(resume, candidate);
 
   skillCategories.forEach((category) => {
     if (category.items && category.items.length > 0) {
@@ -299,3 +298,35 @@ export const generateResumePdf = (resume: TailoredResume): Blob => {
   return doc.output("blob");
 };
 
+// ============================================
+// HELPER FUNCTION FOR SKILL CATEGORIES
+// ============================================
+
+interface SkillCategory {
+  label: string;
+  items: string[] | undefined;
+}
+
+const getSkillCategories = (
+  resume: TailoredResume,
+  candidate: CandidateData
+): SkillCategory[] => {
+  if (isDeveloperCandidate(candidate)) {
+    return [
+      { label: "Languages", items: resume.skills.languages },
+      { label: "Frameworks & Libraries", items: resume.skills.frameworks_libraries },
+      { label: "Architecture", items: resume.skills.architecture },
+      { label: "Tools & Platforms", items: resume.skills.tools_platforms },
+      { label: "Methodologies", items: resume.skills.methodologies },
+    ];
+  }
+
+  // Payroll candidate
+  return [
+    { label: "Payroll Systems", items: resume.skills.payroll_systems },
+    { label: "HRIS Applications", items: resume.skills.hris_applications },
+    { label: "Legislative Knowledge", items: resume.skills.legislative_knowledge },
+    { label: "Software Tools", items: resume.skills.software_tools },
+    { label: "Methodologies", items: resume.skills.methodologies },
+  ];
+};

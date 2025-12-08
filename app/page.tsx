@@ -9,9 +9,9 @@ import ApplicationTracker from "./components/ApplicationTracker";
 import CoverLetterForm from "./components/CoverLetterForm";
 import CoverLetterPreview from "./components/CoverLetterPreview";
 import Toast, { ToastItem, useToast } from "./components/Toast";
-import { ResumeResponse, ErrorResponse, APIResponse } from "@/lib/types";
+import { ResumeResponse, ErrorResponse, APIResponse, CandidateData } from "@/lib/types";
 import { CoverLetterResponse } from "@/app/api/generate-cover-letter/route";
-import { candidateData } from "@/lib/candidateData";
+import { candidateList, getCandidateById, candidateData as defaultCandidate } from "@/lib/candidateData";
 
 type AppState = "input" | "loading" | "result" | "error";
 type ActiveView = "tailor" | "coverletter" | "companies" | "tracker";
@@ -27,7 +27,10 @@ export default function Home() {
   const [coverLetterData, setCoverLetterData] = useState<CoverLetterResponse | null>(null);
   const [coverLetterCompany, setCoverLetterCompany] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [activeCandidateId, setActiveCandidateId] = useState<string>(defaultCandidate.id);
   const { toasts, addToast, removeToast } = useToast();
+
+  const activeCandidate: CandidateData = getCandidateById(activeCandidateId) || defaultCandidate;
 
   const handleSubmit = async (jobDescription: string) => {
     setAppState("loading");
@@ -39,7 +42,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ jobDescription }),
+        body: JSON.stringify({ jobDescription, candidateId: activeCandidateId }),
       });
 
       const data: APIResponse = await response.json();
@@ -83,7 +86,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ companyName, whyThisCompany, jobDescription, companyMission }),
+        body: JSON.stringify({ companyName, whyThisCompany, jobDescription, companyMission, candidateId: activeCandidateId }),
       });
 
       const data = await response.json();
@@ -108,6 +111,11 @@ export default function Home() {
     }
   };
 
+  const handleCandidateChange = (candidateId: string) => {
+    setActiveCandidateId(candidateId);
+    handleReset();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -120,6 +128,18 @@ export default function Home() {
     coverletter: "Generate a personalized cover letter tailored to the company and role.",
     companies: "Your curated list of target companies organized by priority and interview difficulty.",
     tracker: "Track your job applications, interview stages, and follow-up dates all in one place.",
+  };
+
+  // Get candidate initials for avatar
+  const getCandidateInitials = (name: string) => {
+    return name.replace(/\s*\(.*?\)\s*/g, "").split(" ").map((n) => n[0]).join("");
+  };
+
+  // Get gradient colors based on profession type
+  const getProfileGradient = (professionType: string) => {
+    return professionType === "developer"
+      ? "from-amber-400 to-orange-500"
+      : "from-emerald-400 to-teal-500";
   };
 
   return (
@@ -159,6 +179,43 @@ export default function Home() {
           <p className="text-slate-600 text-lg max-w-2xl mx-auto mb-6">
             {viewDescriptions[activeView]}
           </p>
+
+          {/* Candidate Selector */}
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex bg-white/80 backdrop-blur-sm p-1.5 rounded-2xl shadow-lg shadow-slate-200/50 border border-white gap-2">
+              {candidateList.map((candidate) => (
+                <button
+                  key={candidate.id}
+                  onClick={() => handleCandidateChange(candidate.id)}
+                  onKeyDown={(e) => handleKeyDown(e, () => handleCandidateChange(candidate.id))}
+                  aria-label={`Select ${candidate.name}`}
+                  aria-selected={activeCandidateId === candidate.id}
+                  tabIndex={0}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200
+                            ${activeCandidateId === candidate.id
+                              ? `bg-gradient-to-r ${getProfileGradient(candidate.professionType)} text-white shadow-md`
+                              : "text-slate-600 hover:bg-slate-100"
+                            }`}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                                ${activeCandidateId === candidate.id
+                                  ? "bg-white/20 text-white"
+                                  : `bg-gradient-to-br ${getProfileGradient(candidate.professionType)} text-white`
+                                }`}>
+                    {getCandidateInitials(candidate.name)}
+                  </div>
+                  <div className="text-left">
+                    <p className={`text-sm font-semibold ${activeCandidateId === candidate.id ? "text-white" : "text-slate-800"}`}>
+                      {candidate.name.replace(/\s*\(.*?\)\s*/g, "")}
+                    </p>
+                    <p className={`text-xs ${activeCandidateId === candidate.id ? "text-white/80" : "text-slate-500"}`}>
+                      {candidate.professionalTitle}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
           
           {/* View Toggle */}
           <div className="inline-flex bg-slate-100 p-1 rounded-xl flex-wrap justify-center gap-1">
@@ -244,12 +301,16 @@ export default function Home() {
               {appState === "input" && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
                   {/* Candidate info badge */}
-                  <div className="flex items-center gap-3 mb-8 p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold">
-                      {candidateData.name.split(" ").map((n) => n[0]).join("")}
+                  <div className={`flex items-center gap-3 mb-8 p-4 rounded-xl border
+                                ${activeCandidate.professionType === "developer"
+                                  ? "bg-gradient-to-r from-slate-50 to-slate-100 border-slate-200"
+                                  : "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
+                                }`}>
+                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getProfileGradient(activeCandidate.professionType)} flex items-center justify-center text-white font-bold`}>
+                      {getCandidateInitials(activeCandidate.name)}
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-800">{candidateData.name}</p>
+                      <p className="font-semibold text-slate-800">{activeCandidate.name}</p>
                       <p className="text-sm text-slate-500">Your profile is ready to be tailored</p>
                     </div>
                   </div>
@@ -269,6 +330,7 @@ export default function Home() {
                   data={resumeData} 
                   onReset={handleReset}
                   onToast={addToast}
+                  candidate={activeCandidate}
                 />
               )}
 
@@ -322,12 +384,16 @@ export default function Home() {
               {appState === "input" && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
                   {/* Candidate info badge */}
-                  <div className="flex items-center gap-3 mb-8 p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-bold">
-                      {candidateData.name.split(" ").map((n) => n[0]).join("")}
+                  <div className={`flex items-center gap-3 mb-8 p-4 rounded-xl border
+                                ${activeCandidate.professionType === "developer"
+                                  ? "bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200"
+                                  : "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
+                                }`}>
+                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${activeCandidate.professionType === "developer" ? "from-violet-400 to-purple-500" : "from-emerald-400 to-teal-500"} flex items-center justify-center text-white font-bold`}>
+                      {getCandidateInitials(activeCandidate.name)}
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-800">{candidateData.name}</p>
+                      <p className="font-semibold text-slate-800">{activeCandidate.name}</p>
                       <p className="text-sm text-slate-500">Generate a personalized cover letter</p>
                     </div>
                   </div>
@@ -348,6 +414,7 @@ export default function Home() {
                   companyName={coverLetterCompany}
                   onReset={handleReset}
                   onToast={addToast}
+                  candidate={activeCandidate}
                 />
               )}
 
