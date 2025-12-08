@@ -1,17 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import JobDescriptionForm from "./components/JobDescriptionForm";
 import ResumePreview from "./components/ResumePreview";
 import LoadingState from "./components/LoadingState";
 import TargetCompanies from "./components/TargetCompanies";
-import ApplicationTracker from "./components/ApplicationTracker";
 import CoverLetterForm from "./components/CoverLetterForm";
 import CoverLetterPreview from "./components/CoverLetterPreview";
 import Toast, { ToastItem, useToast } from "./components/Toast";
 import { ResumeResponse, ErrorResponse, APIResponse, CandidateData } from "@/lib/types";
 import { CoverLetterResponse } from "@/app/api/generate-cover-letter/route";
 import { candidateList, getCandidateById, candidateData as defaultCandidate } from "@/lib/candidateData";
+
+// Dynamically import ApplicationTracker to avoid Supabase initialization during build
+const ApplicationTracker = dynamic(() => import("./components/ApplicationTracker"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center py-12">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+    </div>
+  ),
+});
 
 type AppState = "input" | "loading" | "result" | "error";
 type ActiveView = "tailor" | "coverletter" | "companies" | "tracker";

@@ -1,18 +1,16 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "./database.types";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-let supabase: SupabaseClient<Database> | null = null;
-
-if (supabaseUrl && supabaseAnonKey) {
-  supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-} else {
-  console.warn(
-    "Supabase credentials not found. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your .env.local file."
-  );
-}
+// Only create the client if we have valid credentials
+// This runs at module load time, but with dynamic imports, this module
+// is only loaded on the client side
+const supabase: SupabaseClient<Database> | null =
+  supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith("http")
+    ? createClient<Database>(supabaseUrl, supabaseAnonKey)
+    : null;
 
 export { supabase };
 
