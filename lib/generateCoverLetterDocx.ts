@@ -13,60 +13,26 @@ export const generateCoverLetterDocx = async (
   companyName: string,
   candidate: CandidateData = defaultCandidate
 ): Promise<Blob> => {
-  const { name, email, phone, location, linkedin } = candidate;
+  const { name, email, phone, location } = candidate;
   const today = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
-  // Build contact paragraphs
-  const contactParagraphs = [
-    new Paragraph({
-      alignment: AlignmentType.LEFT,
-      spacing: { after: 40 },
-      children: [
-        new TextRun({
-          text: `${email} | ${phone} | ${location}`,
-          size: CONTACT_SIZE,
-          font: FONT_FAMILY,
-          color: "666666",
-        }),
-      ],
-    }),
-  ];
-
-  // Only add LinkedIn paragraph if available
-  if (linkedin) {
-    contactParagraphs.push(
-      new Paragraph({
-        alignment: AlignmentType.LEFT,
-        spacing: { after: 400 },
-        children: [
-          new TextRun({
-            text: linkedin,
-            size: CONTACT_SIZE,
-            font: FONT_FAMILY,
-            color: "666666",
-          }),
-        ],
-      })
-    );
-  } else {
-    // Add spacing after contact info
-    contactParagraphs[0] = new Paragraph({
-      alignment: AlignmentType.LEFT,
-      spacing: { after: 400 },
-      children: [
-        new TextRun({
-          text: `${email} | ${phone} | ${location}`,
-          size: CONTACT_SIZE,
-          font: FONT_FAMILY,
-          color: "666666",
-        }),
-      ],
-    });
-  }
+  // Build contact paragraph (without LinkedIn for cover letters)
+  const contactParagraph = new Paragraph({
+    alignment: AlignmentType.LEFT,
+    spacing: { after: 400 },
+    children: [
+      new TextRun({
+        text: `${email} | ${phone} | ${location}`,
+        size: CONTACT_SIZE,
+        font: FONT_FAMILY,
+        color: "666666",
+      }),
+    ],
+  });
 
   const doc = new Document({
     sections: [
@@ -97,7 +63,7 @@ export const generateCoverLetterDocx = async (
           }),
 
           // Contact Info
-          ...contactParagraphs,
+          contactParagraph,
 
           // Date
           new Paragraph({

@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { generateSystemPrompt, formatUserMessage } from "@/lib/systemPrompt";
-import { formatCandidateExperience, getCandidateById, candidateData as defaultCandidate } from "@/lib/candidateData";
+import {
+  formatCandidateExperience,
+  getCandidateById,
+  candidateData as defaultCandidate,
+} from "@/lib/candidateData";
 import { APIResponse } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
-    const { jobDescription, candidateId } = await request.json();
+    const { jobDescription, candidateId, additionalKeywords } =
+      await request.json();
 
     if (!jobDescription || typeof jobDescription !== "string") {
       return NextResponse.json(
@@ -17,14 +22,19 @@ export async function POST(request: NextRequest) {
 
     if (jobDescription.trim().length < 50) {
       return NextResponse.json(
-        { error: "Job description seems too short. Please paste the full job posting." },
+        {
+          error:
+            "Job description seems too short. Please paste the full job posting.",
+        },
         { status: 400 }
       );
     }
 
     // Get candidate data - use provided ID or default
-    const candidate = candidateId ? getCandidateById(candidateId) : defaultCandidate;
-    
+    const candidate = candidateId
+      ? getCandidateById(candidateId)
+      : defaultCandidate;
+
     if (!candidate) {
       return NextResponse.json(
         { error: "Invalid candidate ID" },
@@ -32,11 +42,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate additionalKeywords if provided
+    const validatedKeywords: string[] = Array.isArray(additionalKeywords)
+      ? additionalKeywords.filter(
+          (k): k is string => typeof k === "string" && k.trim().length > 0
+        )
+      : [];
+
     const apiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: "API key not configured. Please add ANTHROPIC_API_KEY to your environment variables." },
+        {
+          error:
+            "API key not configured. Please add ANTHROPIC_API_KEY to your environment variables.",
+        },
         { status: 500 }
       );
     }
@@ -45,10 +65,14 @@ export async function POST(request: NextRequest) {
       apiKey,
     });
 
-    // Generate dynamic system prompt based on candidate
-    const systemPrompt = generateSystemPrompt(candidate);
+    // Generate dynamic system prompt based on candidate and additional keywords
+    const systemPrompt = generateSystemPrompt(candidate, validatedKeywords);
     const candidateExperience = formatCandidateExperience(candidate);
-    const userMessage = formatUserMessage(jobDescription, candidateExperience);
+    const userMessage = formatUserMessage(
+      jobDescription,
+      candidateExperience,
+      validatedKeywords
+    );
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
@@ -65,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     // Extract the text content from the response
     const textContent = message.content.find((block) => block.type === "text");
-    
+
     if (!textContent || textContent.type !== "text") {
       return NextResponse.json(
         { error: "No text content in response" },
@@ -75,15 +99,15 @@ export async function POST(request: NextRequest) {
 
     // Parse the JSON response
     let parsedResponse: APIResponse;
-    
+
     try {
       // Try to extract JSON from the response (in case there's extra text)
       const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
-      
+
       if (!jsonMatch) {
         throw new Error("No JSON found in response");
       }
-      
+
       parsedResponse = JSON.parse(jsonMatch[0]);
     } catch {
       console.error("Failed to parse response:", textContent.text);
@@ -96,13 +120,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(parsedResponse);
   } catch (error) {
     console.error("Error generating resume:", error);
-    
+
     if (error instanceof Anthropic.APIError) {
       if (error.status === 400) {
         const errorMessage = String(error.message || "");
         if (errorMessage.includes("credit balance")) {
           return NextResponse.json(
-            { error: "Anthropic API credit balance is too low. Please add credits at https://console.anthropic.com/settings/billing" },
+            {
+              error:
+                "Anthropic API credit balance is too low. Please add credits at https://console.anthropic.com/settings/billing",
+            },
             { status: 400 }
           );
         }
@@ -120,7 +147,7 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-    
+
     return NextResponse.json(
       { error: "An unexpected error occurred. Please try again." },
       { status: 500 }

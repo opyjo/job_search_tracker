@@ -9,19 +9,31 @@ import TargetCompanies from "./components/TargetCompanies";
 import CoverLetterForm from "./components/CoverLetterForm";
 import CoverLetterPreview from "./components/CoverLetterPreview";
 import Toast, { ToastItem, useToast } from "./components/Toast";
-import { ResumeResponse, ErrorResponse, APIResponse, CandidateData } from "@/lib/types";
+import {
+  ResumeResponse,
+  ErrorResponse,
+  APIResponse,
+  CandidateData,
+} from "@/lib/types";
 import { CoverLetterResponse } from "@/app/api/generate-cover-letter/route";
-import { candidateList, getCandidateById, candidateData as defaultCandidate } from "@/lib/candidateData";
+import {
+  candidateList,
+  getCandidateById,
+  candidateData as defaultCandidate,
+} from "@/lib/candidateData";
 
 // Dynamically import ApplicationTracker to avoid Supabase initialization during build
-const ApplicationTracker = dynamic(() => import("./components/ApplicationTracker"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center py-12">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
-    </div>
-  ),
-});
+const ApplicationTracker = dynamic(
+  () => import("./components/ApplicationTracker"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+      </div>
+    ),
+  }
+);
 
 type AppState = "input" | "loading" | "result" | "error";
 type ActiveView = "tailor" | "coverletter" | "companies" | "tracker";
@@ -34,17 +46,27 @@ export default function Home() {
   const [appState, setAppState] = useState<AppState>("input");
   const [activeView, setActiveView] = useState<ActiveView>("tailor");
   const [resumeData, setResumeData] = useState<ResumeResponse | null>(null);
-  const [coverLetterData, setCoverLetterData] = useState<CoverLetterResponse | null>(null);
+  const [coverLetterData, setCoverLetterData] =
+    useState<CoverLetterResponse | null>(null);
   const [coverLetterCompany, setCoverLetterCompany] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [activeCandidateId, setActiveCandidateId] = useState<string>(defaultCandidate.id);
+  const [activeCandidateId, setActiveCandidateId] = useState<string>(
+    defaultCandidate.id
+  );
+  const [lastJobDescription, setLastJobDescription] = useState<string>("");
+  const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
   const { toasts, addToast, removeToast } = useToast();
 
-  const activeCandidate: CandidateData = getCandidateById(activeCandidateId) || defaultCandidate;
+  const activeCandidate: CandidateData =
+    getCandidateById(activeCandidateId) || defaultCandidate;
 
-  const handleSubmit = async (jobDescription: string) => {
+  const handleSubmit = async (
+    jobDescription: string,
+    additionalKeywords?: string[]
+  ) => {
     setAppState("loading");
     setErrorMessage("");
+    setLastJobDescription(jobDescription);
 
     try {
       const response = await fetch("/api/generate-resume", {
@@ -52,13 +74,19 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ jobDescription, candidateId: activeCandidateId }),
+        body: JSON.stringify({
+          jobDescription,
+          candidateId: activeCandidateId,
+          additionalKeywords,
+        }),
       });
 
       const data: APIResponse = await response.json();
 
       if (!response.ok || isErrorResponse(data)) {
-        const error = isErrorResponse(data) ? data.error : "An unexpected error occurred";
+        const error = isErrorResponse(data)
+          ? data.error
+          : "An unexpected error occurred";
         setErrorMessage(error);
         setAppState("error");
         addToast(error, "error");
@@ -67,7 +95,12 @@ export default function Home() {
 
       setResumeData(data);
       setAppState("result");
-      addToast("Resume tailored successfully!", "success");
+      const successMessage = additionalKeywords?.length
+        ? `Resume regenerated with ${
+            additionalKeywords.length
+          } additional keyword${additionalKeywords.length !== 1 ? "s" : ""}!`
+        : "Resume tailored successfully!";
+      addToast(successMessage, "success");
     } catch (error) {
       console.error("Error:", error);
       const message = "Failed to connect to the server. Please try again.";
@@ -83,9 +116,34 @@ export default function Home() {
     setCoverLetterData(null);
     setCoverLetterCompany("");
     setErrorMessage("");
+    setLastJobDescription("");
+    setIsRegenerating(false);
   };
 
-  const handleCoverLetterSubmit = async (companyName: string, whyThisCompany: string, jobDescription: string, companyMission?: string) => {
+  const handleRegenerateWithKeywords = async (keywords: string[]) => {
+    if (!lastJobDescription) {
+      addToast(
+        "Unable to regenerate. Please try generating a new resume.",
+        "error"
+      );
+      return;
+    }
+
+    setIsRegenerating(true);
+
+    try {
+      await handleSubmit(lastJobDescription, keywords);
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const handleCoverLetterSubmit = async (
+    companyName: string,
+    whyThisCompany: string,
+    jobDescription: string,
+    companyMission?: string
+  ) => {
     setAppState("loading");
     setErrorMessage("");
     setCoverLetterCompany(companyName);
@@ -96,7 +154,13 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ companyName, whyThisCompany, jobDescription, companyMission, candidateId: activeCandidateId }),
+        body: JSON.stringify({
+          companyName,
+          whyThisCompany,
+          jobDescription,
+          companyMission,
+          candidateId: activeCandidateId,
+        }),
       });
 
       const data = await response.json();
@@ -134,15 +198,23 @@ export default function Home() {
   };
 
   const viewDescriptions: Record<ActiveView, string> = {
-    tailor: "Paste a job description and get a tailored resume optimized for ATS systems and human recruiters.",
-    coverletter: "Generate a personalized cover letter tailored to the company and role.",
-    companies: "Your curated list of target companies organized by priority and interview difficulty.",
-    tracker: "Track your job applications, interview stages, and follow-up dates all in one place.",
+    tailor:
+      "Paste a job description and get a tailored resume optimized for ATS systems and human recruiters.",
+    coverletter:
+      "Generate a personalized cover letter tailored to the company and role.",
+    companies:
+      "Your curated list of target companies organized by priority and interview difficulty.",
+    tracker:
+      "Track your job applications, interview stages, and follow-up dates all in one place.",
   };
 
   // Get candidate initials for avatar
   const getCandidateInitials = (name: string) => {
-    return name.replace(/\s*\(.*?\)\s*/g, "").split(" ").map((n) => n[0]).join("");
+    return name
+      .replace(/\s*\(.*?\)\s*/g, "")
+      .split(" ")
+      .map((n) => n[0])
+      .join("");
   };
 
   // Get gradient colors based on profession type
@@ -197,28 +269,50 @@ export default function Home() {
                 <button
                   key={candidate.id}
                   onClick={() => handleCandidateChange(candidate.id)}
-                  onKeyDown={(e) => handleKeyDown(e, () => handleCandidateChange(candidate.id))}
+                  onKeyDown={(e) =>
+                    handleKeyDown(e, () => handleCandidateChange(candidate.id))
+                  }
                   aria-label={`Select ${candidate.name}`}
                   aria-selected={activeCandidateId === candidate.id}
                   tabIndex={0}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200
-                            ${activeCandidateId === candidate.id
-                              ? `bg-gradient-to-r ${getProfileGradient(candidate.professionType)} text-white shadow-md`
-                              : "text-slate-600 hover:bg-slate-100"
+                            ${
+                              activeCandidateId === candidate.id
+                                ? `bg-gradient-to-r ${getProfileGradient(
+                                    candidate.professionType
+                                  )} text-white shadow-md`
+                                : "text-slate-600 hover:bg-slate-100"
                             }`}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
-                                ${activeCandidateId === candidate.id
-                                  ? "bg-white/20 text-white"
-                                  : `bg-gradient-to-br ${getProfileGradient(candidate.professionType)} text-white`
-                                }`}>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                                ${
+                                  activeCandidateId === candidate.id
+                                    ? "bg-white/20 text-white"
+                                    : `bg-gradient-to-br ${getProfileGradient(
+                                        candidate.professionType
+                                      )} text-white`
+                                }`}
+                  >
                     {getCandidateInitials(candidate.name)}
                   </div>
                   <div className="text-left">
-                    <p className={`text-sm font-semibold ${activeCandidateId === candidate.id ? "text-white" : "text-slate-800"}`}>
+                    <p
+                      className={`text-sm font-semibold ${
+                        activeCandidateId === candidate.id
+                          ? "text-white"
+                          : "text-slate-800"
+                      }`}
+                    >
                       {candidate.name.replace(/\s*\(.*?\)\s*/g, "")}
                     </p>
-                    <p className={`text-xs ${activeCandidateId === candidate.id ? "text-white/80" : "text-slate-500"}`}>
+                    <p
+                      className={`text-xs ${
+                        activeCandidateId === candidate.id
+                          ? "text-white/80"
+                          : "text-slate-500"
+                      }`}
+                    >
                       {candidate.professionalTitle}
                     </p>
                   </div>
@@ -226,77 +320,149 @@ export default function Home() {
               ))}
             </div>
           </div>
-          
+
           {/* View Toggle */}
           <div className="inline-flex bg-slate-100 p-1 rounded-xl flex-wrap justify-center gap-1">
             <button
-              onClick={() => { setActiveView("tailor"); handleReset(); }}
-              onKeyDown={(e) => handleKeyDown(e, () => { setActiveView("tailor"); handleReset(); })}
+              onClick={() => {
+                setActiveView("tailor");
+                handleReset();
+              }}
+              onKeyDown={(e) =>
+                handleKeyDown(e, () => {
+                  setActiveView("tailor");
+                  handleReset();
+                })
+              }
               aria-label="Resume Tailor view"
               aria-selected={activeView === "tailor"}
               tabIndex={0}
               className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
-                        ${activeView === "tailor"
-                          ? "bg-white text-slate-800 shadow-sm"
-                          : "text-slate-600 hover:text-slate-800"
+                        ${
+                          activeView === "tailor"
+                            ? "bg-white text-slate-800 shadow-sm"
+                            : "text-slate-600 hover:text-slate-800"
                         }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
               </svg>
               <span className="hidden sm:inline">Resume Tailor</span>
               <span className="sm:hidden">Resume</span>
             </button>
             <button
-              onClick={() => { setActiveView("coverletter"); handleReset(); }}
-              onKeyDown={(e) => handleKeyDown(e, () => { setActiveView("coverletter"); handleReset(); })}
+              onClick={() => {
+                setActiveView("coverletter");
+                handleReset();
+              }}
+              onKeyDown={(e) =>
+                handleKeyDown(e, () => {
+                  setActiveView("coverletter");
+                  handleReset();
+                })
+              }
               aria-label="Cover Letter view"
               aria-selected={activeView === "coverletter"}
               tabIndex={0}
               className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
-                        ${activeView === "coverletter"
-                          ? "bg-white text-slate-800 shadow-sm"
-                          : "text-slate-600 hover:text-slate-800"
+                        ${
+                          activeView === "coverletter"
+                            ? "bg-white text-slate-800 shadow-sm"
+                            : "text-slate-600 hover:text-slate-800"
                         }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
               </svg>
               <span className="hidden sm:inline">Cover Letter</span>
               <span className="sm:hidden">Letter</span>
             </button>
             <button
               onClick={() => setActiveView("companies")}
-              onKeyDown={(e) => handleKeyDown(e, () => setActiveView("companies"))}
+              onKeyDown={(e) =>
+                handleKeyDown(e, () => setActiveView("companies"))
+              }
               aria-label="Target Companies view"
               aria-selected={activeView === "companies"}
               tabIndex={0}
               className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
-                        ${activeView === "companies"
-                          ? "bg-white text-slate-800 shadow-sm"
-                          : "text-slate-600 hover:text-slate-800"
+                        ${
+                          activeView === "companies"
+                            ? "bg-white text-slate-800 shadow-sm"
+                            : "text-slate-600 hover:text-slate-800"
                         }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
               </svg>
               <span className="hidden sm:inline">Target Companies</span>
               <span className="sm:hidden">Companies</span>
             </button>
             <button
               onClick={() => setActiveView("tracker")}
-              onKeyDown={(e) => handleKeyDown(e, () => setActiveView("tracker"))}
+              onKeyDown={(e) =>
+                handleKeyDown(e, () => setActiveView("tracker"))
+              }
               aria-label="Application Tracker view"
               aria-selected={activeView === "tracker"}
               tabIndex={0}
               className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
-                        ${activeView === "tracker"
-                          ? "bg-white text-slate-800 shadow-sm"
-                          : "text-slate-600 hover:text-slate-800"
+                        ${
+                          activeView === "tracker"
+                            ? "bg-white text-slate-800 shadow-sm"
+                            : "text-slate-600 hover:text-slate-800"
                         }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                />
               </svg>
               <span className="hidden sm:inline">Application Tracker</span>
               <span className="sm:hidden">Tracker</span>
@@ -311,21 +477,35 @@ export default function Home() {
               {appState === "input" && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
                   {/* Candidate info badge */}
-                  <div className={`flex items-center gap-3 mb-8 p-4 rounded-xl border
-                                ${activeCandidate.professionType === "developer"
-                                  ? "bg-gradient-to-r from-slate-50 to-slate-100 border-slate-200"
-                                  : "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
-                                }`}>
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getProfileGradient(activeCandidate.professionType)} flex items-center justify-center text-white font-bold`}>
+                  <div
+                    className={`flex items-center gap-3 mb-8 p-4 rounded-xl border
+                                ${
+                                  activeCandidate.professionType === "developer"
+                                    ? "bg-gradient-to-r from-slate-50 to-slate-100 border-slate-200"
+                                    : "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
+                                }`}
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full bg-gradient-to-br ${getProfileGradient(
+                        activeCandidate.professionType
+                      )} flex items-center justify-center text-white font-bold`}
+                    >
                       {getCandidateInitials(activeCandidate.name)}
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-800">{activeCandidate.name}</p>
-                      <p className="text-sm text-slate-500">Your profile is ready to be tailored</p>
+                      <p className="font-semibold text-slate-800">
+                        {activeCandidate.name}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Your profile is ready to be tailored
+                      </p>
                     </div>
                   </div>
 
-                  <JobDescriptionForm onSubmit={handleSubmit} isLoading={false} />
+                  <JobDescriptionForm
+                    onSubmit={handleSubmit}
+                    isLoading={false}
+                  />
                 </div>
               )}
 
@@ -336,11 +516,13 @@ export default function Home() {
               )}
 
               {appState === "result" && resumeData && (
-                <ResumePreview 
-                  data={resumeData} 
+                <ResumePreview
+                  data={resumeData}
                   onReset={handleReset}
                   onToast={addToast}
                   candidate={activeCandidate}
+                  onRegenerateWithKeywords={handleRegenerateWithKeywords}
+                  isRegenerating={isRegenerating}
                 />
               )}
 
@@ -394,21 +576,37 @@ export default function Home() {
               {appState === "input" && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
                   {/* Candidate info badge */}
-                  <div className={`flex items-center gap-3 mb-8 p-4 rounded-xl border
-                                ${activeCandidate.professionType === "developer"
-                                  ? "bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200"
-                                  : "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
-                                }`}>
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${activeCandidate.professionType === "developer" ? "from-violet-400 to-purple-500" : "from-emerald-400 to-teal-500"} flex items-center justify-center text-white font-bold`}>
+                  <div
+                    className={`flex items-center gap-3 mb-8 p-4 rounded-xl border
+                                ${
+                                  activeCandidate.professionType === "developer"
+                                    ? "bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200"
+                                    : "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
+                                }`}
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full bg-gradient-to-br ${
+                        activeCandidate.professionType === "developer"
+                          ? "from-violet-400 to-purple-500"
+                          : "from-emerald-400 to-teal-500"
+                      } flex items-center justify-center text-white font-bold`}
+                    >
                       {getCandidateInitials(activeCandidate.name)}
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-800">{activeCandidate.name}</p>
-                      <p className="text-sm text-slate-500">Generate a personalized cover letter</p>
+                      <p className="font-semibold text-slate-800">
+                        {activeCandidate.name}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Generate a personalized cover letter
+                      </p>
                     </div>
                   </div>
 
-                  <CoverLetterForm onSubmit={handleCoverLetterSubmit} isLoading={false} />
+                  <CoverLetterForm
+                    onSubmit={handleCoverLetterSubmit}
+                    isLoading={false}
+                  />
                 </div>
               )}
 
@@ -419,7 +617,7 @@ export default function Home() {
               )}
 
               {appState === "result" && coverLetterData && (
-                <CoverLetterPreview 
+                <CoverLetterPreview
                   data={coverLetterData}
                   companyName={coverLetterCompany}
                   onReset={handleReset}
@@ -488,9 +686,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="text-center mt-12 text-sm text-slate-500">
-          <p>
-            Built with Next.js, Tailwind CSS, and Claude AI
-          </p>
+          <p>Built with Next.js, Tailwind CSS, and Claude AI</p>
         </footer>
       </div>
 

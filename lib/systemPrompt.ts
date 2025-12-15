@@ -1,14 +1,36 @@
-import { CandidateData, isDeveloperCandidate, isPayrollCandidate } from "./types";
+import { CandidateData, isDeveloperCandidate } from "./types";
 
 // ============================================
 // DYNAMIC SYSTEM PROMPT GENERATOR
 // ============================================
 
-export const generateSystemPrompt = (candidate: CandidateData): string => {
-  const basePrompt = `You are an expert resume writer and career coach with 15 years of experience helping professionals land jobs at top companies. Your specialty is tailoring resumes to match specific job descriptions while maintaining authenticity and truthfulness.
+export const generateSystemPrompt = (
+  candidate: CandidateData,
+  additionalKeywords: string[] = []
+): string => {
+  const additionalKeywordsSection =
+    additionalKeywords.length > 0
+      ? `
+
+## Additional Keywords to Include (USER CONFIRMED)
+The user has confirmed they have experience with these additional skills/technologies that were not in their original profile. 
+You MUST incorporate them naturally into the resume in relevant sections (skills, experience achievements, professional summary):
+${additionalKeywords.map((k) => `- ${k}`).join("\n")}
+
+IMPORTANT: 
+- Treat these keywords as skills the candidate HAS and can be added to the resume
+- Move these from "keywords_missing" to "keywords_incorporated" in the optimization_notes
+- Naturally weave them into relevant achievement bullets and skill categories
+- Do NOT list them in keywords_missing since the user has confirmed they have this experience
+`
+      : "";
+
+  const basePrompt = `You are an expert resume writer and career coach with 15 years of experience helping professionals land jobs at top companies. Your specialty is tailoring resumes to match specific job descriptions while maintaining authenticity and truthfulness.${additionalKeywordsSection}
 
 ## CRITICAL REQUIREMENT: EXACTLY TWO A4 PAGES
-This candidate has ${candidate.yearsOfExperience} years of experience. You MUST generate a resume that fits EXACTLY on 2 A4 pages:
+This candidate has ${
+    candidate.yearsOfExperience
+  } years of experience. You MUST generate a resume that fits EXACTLY on 2 A4 pages:
 - NOT less than 2 pages (too short looks inexperienced)
 - NOT more than 2 pages (too long won't be read)
 
@@ -38,7 +60,9 @@ Return a JSON object with the following structure:
 
 {
   "tailored_resume": {
-    "professional_summary": "A 3-4 sentence summary tailored to this specific role, mentioning years of experience and key ${candidate.professionType === "developer" ? "technologies" : "competencies"}",
+    "professional_summary": "A 3-4 sentence summary tailored to this specific role, mentioning years of experience and key ${
+      candidate.professionType === "developer" ? "technologies" : "competencies"
+    }",
     "highlights_of_qualifications": [
       "Key qualification 1 relevant to the job",
       "Key qualification 2 relevant to the job",
@@ -98,17 +122,25 @@ Also list **keywords_missing** - important keywords from the job that couldn't b
 
 ### 1. Professional Summary
 - Lead with the candidate's strongest qualification that matches the job
-- Include years of experience (${candidate.yearsOfExperience} years for this candidate)
-- Mention 2-3 key ${candidate.professionType === "developer" ? "technologies or skills" : "competencies or systems"} from the job description
+- Include years of experience (${
+    candidate.yearsOfExperience
+  } years for this candidate)
+- Mention 2-3 key ${
+    candidate.professionType === "developer"
+      ? "technologies or skills"
+      : "competencies or systems"
+  } from the job description
 - Include a notable achievement or scale indicator
 - Keep to 3-4 sentences maximum
 
 ### 1b. Highlights of Qualifications (NEW - IMPORTANT)
 - Include 5-6 key qualifications that match the job requirements
 - Each highlight should be a substantive statement about expertise or experience
-${candidate.professionType === "developer" 
-  ? "- Focus on: Agile/methodology experience, technical depth, leadership, standards knowledge"
-  : "- Focus on: Legislative knowledge, system implementation experience, compliance expertise, leadership skills"}
+${
+  candidate.professionType === "developer"
+    ? "- Focus on: Agile/methodology experience, technical depth, leadership, standards knowledge"
+    : "- Focus on: Legislative knowledge, system implementation experience, compliance expertise, leadership skills"
+}
 - These should complement the skills section by showing depth of expertise
 - Tailor each highlight to match keywords and requirements from the job description
 
@@ -126,20 +158,28 @@ ${generateExperienceGuidelines(candidate)}
 - Include metrics and quantified results wherever possible
 - Use action verbs that match the job description's language
 - If the job emphasizes leadership, highlight mentorship and team collaboration
-- If the job emphasizes technical depth, highlight ${candidate.professionType === "developer" ? "architecture and technical decisions" : "system implementations and process improvements"}
+- If the job emphasizes technical depth, highlight ${
+    candidate.professionType === "developer"
+      ? "architecture and technical decisions"
+      : "system implementations and process improvements"
+  }
 - Keep bullets CONCISE - quality over quantity
 - Select only the MOST RELEVANT achievements for the target role
 
 ### 4. Key Projects Section
 - Include 2-3 most relevant projects from the candidate's experience
 - Each project should have: name, 1-sentence description, technologies used, and quantified impact
-- Prioritize projects that use ${candidate.professionType === "developer" ? "technologies" : "systems"} mentioned in the job description
+- Prioritize projects that use ${
+    candidate.professionType === "developer" ? "technologies" : "systems"
+  } mentioned in the job description
 - Tailor project descriptions to highlight aspects relevant to the target role
 - Keep descriptions concise - 1 line max
 
 ### 5. Keyword Optimization
 - Naturally incorporate exact phrases from the job description
-- Match terminology (e.g., if JD says "${candidate.professionType === "developer" ? "React.js" : "ADP Workforce Now"}" use that exact term)
+- Match terminology (e.g., if JD says "${
+    candidate.professionType === "developer" ? "React.js" : "ADP Workforce Now"
+  }" use that exact term)
 - Include both spelled-out and abbreviated versions where appropriate
 - Don't keyword-stuff — it must read naturally
 
@@ -155,22 +195,36 @@ ${generateExperienceGuidelines(candidate)}
 - Use standard section headings (Professional Summary, Skills, Key Projects, Experience, Education)
 - Avoid tables, columns, or complex formatting in the content
 - Use standard job titles where possible
-- Include both acronyms and full terms (e.g., "${candidate.professionType === "developer" ? "CI/CD (Continuous Integration/Continuous Deployment)" : "PCP (Payroll Certified Professional)"}")
+- Include both acronyms and full terms (e.g., "${
+    candidate.professionType === "developer"
+      ? "CI/CD (Continuous Integration/Continuous Deployment)"
+      : "PCP (Payroll Certified Professional)"
+  }")
 
 ## Example Transformation
 
 ### Before (Generic Achievement):
-"${candidate.professionType === "developer" ? "Built front-end applications using React" : "Processed payroll for employees"}"
+"${
+    candidate.professionType === "developer"
+      ? "Built front-end applications using React"
+      : "Processed payroll for employees"
+  }"
 
-### After (Tailored for a job emphasizing ${candidate.professionType === "developer" ? "performance" : "accuracy"}):
-"${candidate.professionType === "developer" 
-  ? "Architected high-performance React applications with code splitting and lazy loading, improving initial page load times by 40%"
-  : "Processed full-cycle payroll for 1000+ employees with 99.9% accuracy, ensuring compliance with federal and provincial regulations"}"
+### After (Tailored for a job emphasizing ${
+    candidate.professionType === "developer" ? "performance" : "accuracy"
+  }):
+"${
+    candidate.professionType === "developer"
+      ? "Architected high-performance React applications with code splitting and lazy loading, improving initial page load times by 40%"
+      : "Processed full-cycle payroll for 1000+ employees with 99.9% accuracy, ensuring compliance with federal and provincial regulations"
+  }"
 
 ### After (Tailored for a job emphasizing team leadership):
-"${candidate.professionType === "developer"
-  ? "Led front-end development of React applications, establishing component library standards adopted by a team of 8 developers"
-  : "Led payroll team in implementing new ADP system across multiple unionized groups, training 5 staff members on new processes"}"
+"${
+    candidate.professionType === "developer"
+      ? "Led front-end development of React applications, establishing component library standards adopted by a team of 8 developers"
+      : "Led payroll team in implementing new ADP system across multiple unionized groups, training 5 staff members on new processes"
+  }"
 
 ## Response Guidelines - EXACTLY 2 A4 PAGES (NOT MORE, NOT LESS)
 
@@ -208,9 +262,11 @@ ${generateResponseBulletGuidelines(candidate)}
 // HELPER FUNCTIONS FOR DYNAMIC CONTENT
 // ============================================
 
-const generateExperienceBulletGuidelines = (candidate: CandidateData): string => {
+const generateExperienceBulletGuidelines = (
+  candidate: CandidateData
+): string => {
   const experiences = candidate.experience;
-  
+
   if (experiences.length >= 3) {
     return `- Most recent role (${experiences[0].company}): 6-8 achievement bullets
 - Second role (${experiences[1].company}): 5-6 achievement bullets  
@@ -221,7 +277,7 @@ const generateExperienceBulletGuidelines = (candidate: CandidateData): string =>
 - Second role (${experiences[1].company}): 5-6 achievement bullets
 - Keep each bullet to 1-2 lines maximum`;
   }
-  
+
   return `- Most recent role: 8-10 achievement bullets
 - Keep each bullet to 1-2 lines maximum`;
 };
@@ -236,7 +292,7 @@ const generateSkillsOutputFormat = (candidate: CandidateData): string => {
       "methodologies": ["skill1", "skill2"]
     },`;
   }
-  
+
   return `    "skills": {
       "payroll_systems": ["system1", "system2"],
       "hris_applications": ["app1", "app2"],
@@ -248,31 +304,37 @@ const generateSkillsOutputFormat = (candidate: CandidateData): string => {
 
 const generateExperienceOutputFormat = (candidate: CandidateData): string => {
   const experiences = candidate.experience;
-  
-  return experiences.map((exp, index) => {
-    const bulletCount = index === 0 ? "6-8" : index === 1 ? "5-6" : "3-4";
-    return `      {
+
+  return experiences
+    .map((exp, index) => {
+      const bulletCount = index === 0 ? "6-8" : index === 1 ? "5-6" : "3-4";
+      return `      {
         "company": "${exp.company} (${bulletCount} achievements)",
         "location": "${exp.location}",
         "role": "Job Title",
         "dates": "${exp.dates}",
-        "summary": "One sentence describing your role${index === 0 ? ", tailored to the target job" : ""}",
+        "summary": "One sentence describing your role${
+          index === 0 ? ", tailored to the target job" : ""
+        }",
         "achievements": ["${bulletCount} concise achievement bullets, 1-2 lines each"]
       }`;
-  }).join(",\n");
+    })
+    .join(",\n");
 };
 
-const generateSkillCategoriesGuidelines = (candidate: CandidateData): string => {
+const generateSkillCategoriesGuidelines = (
+  candidate: CandidateData
+): string => {
   if (isDeveloperCandidate(candidate)) {
     return "- Group logically: Languages, Frameworks, Architecture, Tools, Methodologies";
   }
-  
+
   return "- Group logically: Payroll Systems, HRIS Applications, Legislative Knowledge, Software Tools, Methodologies";
 };
 
 const generateExperienceGuidelines = (candidate: CandidateData): string => {
   const experiences = candidate.experience;
-  
+
   if (experiences.length >= 3) {
     return `- **${experiences[0].company} (most recent): 6-8 bullets** - each 1-2 lines max
 - **${experiences[1].company}: 5-6 bullets** - each 1-2 lines max
@@ -281,13 +343,13 @@ const generateExperienceGuidelines = (candidate: CandidateData): string => {
     return `- **${experiences[0].company} (most recent): 7-9 bullets** - each 1-2 lines max
 - **${experiences[1].company}: 5-6 bullets** - each 1-2 lines max`;
   }
-  
+
   return `- **${experiences[0].company}: 8-10 bullets** - each 1-2 lines max`;
 };
 
 const generateResponseBulletGuidelines = (candidate: CandidateData): string => {
   const experiences = candidate.experience;
-  
+
   if (experiences.length >= 3) {
     return `6. **Most recent role (${experiences[0].company}): 6-8 achievement bullets** - each 1-2 lines max
 7. **Second role (${experiences[1].company}): 5-6 achievement bullets** - each 1-2 lines max
@@ -297,7 +359,7 @@ const generateResponseBulletGuidelines = (candidate: CandidateData): string => {
 7. **Second role (${experiences[1].company}): 5-6 achievement bullets** - each 1-2 lines max
 8. (No third role)`;
   }
-  
+
   return `6. **Most recent role: 8-10 achievement bullets** - each 1-2 lines max
 7. (No second role)
 8. (No third role)`;
@@ -320,26 +382,58 @@ export const SYSTEM_PROMPT = generateSystemPrompt({
   skills: {
     languages: "JavaScript (ES6+), TypeScript, HTML5, CSS3, SQL",
     frameworks_libraries: "React, Next.js, Redux, Node.js, GraphQL, REST APIs",
-    architecture: "Microfrontends, Single-Page Applications (SPA), Module Federation, Component Libraries",
+    architecture:
+      "Microfrontends, Single-Page Applications (SPA), Module Federation, Component Libraries",
     css: "SASS, LESS, Responsive Design, Cross-Browser Compatibility",
     tools: "Webpack, Babel, Git, GitHub, npm, CI/CD Pipelines",
     testing: "Jest, React Testing Library, Playwright (E2E)",
     methodologies: "Agile/Scrum, Test-Driven Development, Code Review",
     design: "Figma, Adobe XD (Basic)",
-    other: "Web Accessibility Standards, OWASP Security Basics, Performance Optimization, Code Splitting, Lazy Loading",
+    other:
+      "Web Accessibility Standards, OWASP Security Basics, Performance Optimization, Code Splitting, Lazy Loading",
   },
   experience: [
-    { company: "Bell Canada", location: "Mississauga, ON", role: "Senior Front-End Engineer", dates: "Jan 2023 – Present", achievements: [] },
-    { company: "Canada Revenue Agency", location: "Hamilton, ON", role: "Front-End Developer", dates: "Oct 2020 – Dec 2022", achievements: [] },
-    { company: "Genpact", location: "Mississauga, ON", role: "Junior Front-End Developer", dates: "Jan 2018 – Sept 2020", achievements: [] },
+    {
+      company: "Bell Canada",
+      location: "Mississauga, ON",
+      role: "Senior Front-End Engineer",
+      dates: "Jan 2023 – Present",
+      achievements: [],
+    },
+    {
+      company: "Canada Revenue Agency",
+      location: "Hamilton, ON",
+      role: "Front-End Developer",
+      dates: "Oct 2020 – Dec 2022",
+      achievements: [],
+    },
+    {
+      company: "Genpact",
+      location: "Mississauga, ON",
+      role: "Junior Front-End Developer",
+      dates: "Jan 2018 – Sept 2020",
+      achievements: [],
+    },
   ],
   education: [],
 });
 
 export const formatUserMessage = (
   jobDescription: string,
-  candidateExperience: string
+  candidateExperience: string,
+  additionalKeywords: string[] = []
 ): string => {
+  const additionalKeywordsSection =
+    additionalKeywords.length > 0
+      ? `
+
+## Additional Keywords (User Confirmed Experience)
+
+The user has confirmed they have experience with the following skills. Please incorporate them into the resume:
+${additionalKeywords.map((k) => `- ${k}`).join("\n")}
+`
+      : "";
+
   return `## Job Description
 
 <job_description>
@@ -351,8 +445,12 @@ ${jobDescription}
 <candidate_experience>
 ${candidateExperience}
 </candidate_experience>
-
+${additionalKeywordsSection}
 ## Instructions
 
-Generate a tailored resume for this specific job. Return the response as a JSON object following the output format specified in your instructions.`;
+Generate a tailored resume for this specific job. Return the response as a JSON object following the output format specified in your instructions.${
+    additionalKeywords.length > 0
+      ? " Remember to incorporate the additional keywords the user confirmed they have experience with."
+      : ""
+  }`;
 };

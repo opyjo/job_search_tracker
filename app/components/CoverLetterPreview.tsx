@@ -372,9 +372,6 @@ ${cover_letter.signature.replace("\\n", "\n")}`;
         <div className="mb-8 pb-6 border-b border-slate-200">
           <h3 className="text-xl font-bold text-slate-800">{candidate.name}</h3>
           <p className="text-slate-600 text-sm">{contactParts.join(" | ")}</p>
-          {candidate.linkedin && (
-            <p className="text-slate-600 text-sm">{candidate.linkedin}</p>
-          )}
         </div>
 
         {/* Letter Body */}

@@ -28,7 +28,7 @@ export const generateCoverLetterPdf = (
   companyName: string,
   candidate: CandidateData = defaultCandidate
 ): Blob => {
-  const { name, email, phone, location, linkedin } = candidate;
+  const { name, email, phone, location } = candidate;
   const doc = new jsPDF();
 
   let yPos = MARGIN.top;
@@ -75,14 +75,7 @@ export const generateCoverLetterPdf = (
   doc.setFont("helvetica", "normal");
   doc.setTextColor(COLORS.gray);
   doc.text(`${email} | ${phone} | ${location}`, MARGIN.left, yPos);
-  yPos += 5;
-
-  // Only show LinkedIn if available
-  if (linkedin) {
-    doc.text(linkedin, MARGIN.left, yPos);
-    yPos += 5;
-  }
-  yPos += 10;
+  yPos += 15;
 
   // Date
   doc.setFontSize(FONT_SIZE.body);
