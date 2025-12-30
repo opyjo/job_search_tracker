@@ -83,10 +83,25 @@ ${generateExperienceOutputFormat(candidate)}
       }
     ],
     "education": [
+      ${
+        candidate.professionType === "grc"
+          ? `{
+        "degree": "Certified Information Systems Security Professional (CISSP)",
+        "institution": "ISC²"
+      },
       {
+        "degree": "Certified Information Security Manager (CISM)",
+        "institution": "ISACA"
+      },
+      {
+        "degree": "Bachelor of Science",
+        "institution": "University Name"
+      }`
+          : `{
         "degree": "Degree Name",
         "institution": "School Name",
         "location": "City, Country (optional)"
+      }`
       }
     ]
   },
@@ -235,7 +250,11 @@ ${generateExperienceGuidelines(candidate)}
 5. **Highlights of Qualifications: 5-6 bullets** - each 1 line
 ${generateResponseBulletGuidelines(candidate)}
 9. **Skills section: Keep concise** - list format, not paragraphs
-10. Education section is brief — just degree and institution
+10. ${
+    candidate.professionType === "grc"
+      ? "**Education & Certifications: Include ALL certifications** - For GRC professionals, certifications (CISSP, CISA, CISM, CRISC, ISO 27001 LA, etc.) are critical qualifications. List ALL certifications from the candidate data, followed by academic degrees."
+      : "Education section is brief — just degree and institution"
+  }
 11. Be specific and concrete with metrics, but keep bullets concise
 12. Incorporate keywords naturally from the job description
 13. Quality over quantity - select the MOST relevant achievements, don't include everything

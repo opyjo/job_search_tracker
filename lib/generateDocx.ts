@@ -108,7 +108,7 @@ export const generateResumeDocx = async (
           ...createExperienceSection(resume.experience),
 
           // Education Section
-          createSectionHeading("EDUCATION"),
+          createSectionHeading(candidate.professionType === "grc" ? "EDUCATION & CERTIFICATIONS" : "EDUCATION"),
           ...createEducationSection(resume.education),
         ],
       },

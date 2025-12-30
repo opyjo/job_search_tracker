@@ -219,9 +219,16 @@ export default function Home() {
 
   // Get gradient colors based on profession type
   const getProfileGradient = (professionType: string) => {
-    return professionType === "developer"
-      ? "from-amber-400 to-orange-500"
-      : "from-emerald-400 to-teal-500";
+    switch (professionType) {
+      case "developer":
+        return "from-amber-400 to-orange-500";
+      case "payroll":
+        return "from-emerald-400 to-teal-500";
+      case "grc":
+        return "from-blue-400 to-indigo-500";
+      default:
+        return "from-slate-400 to-slate-500";
+    }
   };
 
   return (
@@ -482,7 +489,9 @@ export default function Home() {
                                 ${
                                   activeCandidate.professionType === "developer"
                                     ? "bg-gradient-to-r from-slate-50 to-slate-100 border-slate-200"
-                                    : "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
+                                    : activeCandidate.professionType === "grc"
+                                      ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200"
+                                      : "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
                                 }`}
                   >
                     <div
@@ -581,16 +590,20 @@ export default function Home() {
                                 ${
                                   activeCandidate.professionType === "developer"
                                     ? "bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200"
-                                    : "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
+                                    : activeCandidate.professionType === "grc"
+                                      ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200"
+                                      : "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
                                 }`}
                   >
-                    <div
-                      className={`w-10 h-10 rounded-full bg-gradient-to-br ${
-                        activeCandidate.professionType === "developer"
-                          ? "from-violet-400 to-purple-500"
+                  <div
+                    className={`w-10 h-10 rounded-full bg-gradient-to-br ${
+                      activeCandidate.professionType === "developer"
+                        ? "from-violet-400 to-purple-500"
+                        : activeCandidate.professionType === "grc"
+                          ? "from-blue-400 to-indigo-500"
                           : "from-emerald-400 to-teal-500"
-                      } flex items-center justify-center text-white font-bold`}
-                    >
+                    } flex items-center justify-center text-white font-bold`}
+                  >
                       {getCandidateInitials(activeCandidate.name)}
                     </div>
                     <div>

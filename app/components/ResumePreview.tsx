@@ -880,7 +880,7 @@ const ResumePreview = ({
           {/* Education */}
           <section>
             <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wider border-b-2 border-slate-300 pb-1 mb-4">
-              Education
+              {candidate.professionType === "grc" ? "Education & Certifications" : "Education"}
             </h2>
             <div className="space-y-2">
               {tailored_resume.education.map((edu, index) => (

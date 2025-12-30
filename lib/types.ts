@@ -2,7 +2,7 @@
 // PROFESSION TYPES
 // ============================================
 
-export type ProfessionType = "developer" | "payroll";
+export type ProfessionType = "developer" | "payroll" | "grc";
 
 // ============================================
 // SKILL STRUCTURES BY PROFESSION
@@ -29,7 +29,16 @@ export interface PayrollSkills {
   certifications: string;
 }
 
-export type CandidateSkills = DeveloperSkills | PayrollSkills;
+export interface GRCSkills {
+  frameworks_standards: string;
+  grc_platforms: string;
+  cloud_security: string;
+  audit_compliance: string;
+  methodologies: string;
+  certifications: string;
+}
+
+export type CandidateSkills = DeveloperSkills | PayrollSkills | GRCSkills;
 
 // ============================================
 // CANDIDATE DATA TYPES
@@ -83,8 +92,14 @@ export interface PayrollCandidateData extends BaseCandidateData {
   skills: PayrollSkills;
 }
 
+// GRC-specific candidate
+export interface GRCCandidateData extends BaseCandidateData {
+  professionType: "grc";
+  skills: GRCSkills;
+}
+
 // Union type for all candidates
-export type CandidateData = DeveloperCandidateData | PayrollCandidateData;
+export type CandidateData = DeveloperCandidateData | PayrollCandidateData | GRCCandidateData;
 
 // Legacy type alias for backward compatibility
 export type LegacyCandidateData = {
@@ -155,6 +170,11 @@ export interface Skills {
   legislative_knowledge?: string[];
   software_tools?: string[];
   certifications?: string[];
+  // GRC-specific categories
+  frameworks_standards?: string[];
+  grc_platforms?: string[];
+  cloud_security?: string[];
+  audit_compliance?: string[];
 }
 
 export interface KeyProject {
@@ -220,4 +240,10 @@ export const isPayrollCandidate = (
   candidate: CandidateData
 ): candidate is PayrollCandidateData => {
   return candidate.professionType === "payroll";
+};
+
+export const isGRCCandidate = (
+  candidate: CandidateData
+): candidate is GRCCandidateData => {
+  return candidate.professionType === "grc";
 };

@@ -2,8 +2,10 @@ import {
   CandidateData,
   DeveloperCandidateData,
   PayrollCandidateData,
+  GRCCandidateData,
   isDeveloperCandidate,
   isPayrollCandidate,
+  isGRCCandidate,
 } from "./types";
 
 // ============================================
@@ -270,12 +272,178 @@ export const adeOjoData: PayrollCandidateData = {
 };
 
 // ============================================
+// OPEYEMI AKINDURO - GRC ANALYST
+// ============================================
+
+export const opeyemiAkinduroData: GRCCandidateData = {
+  id: "opeyemi-akinduro",
+  professionType: "grc",
+  name: "Opeyemi Akinduro (CISSP, CISA, CISM, CRISC)",
+  email: "opieakinduro321@yahoo.com",
+  phone: "(647) 937-5322",
+  location: "Canada",
+  linkedin: "",
+  yearsOfExperience: "10+",
+  professionalTitle: "Senior Governance, Risk, & Compliance Analyst",
+  skills: {
+    frameworks_standards:
+      "ISO 27001, SOC 2, NIST CSF, GDPR, PCI DSS, COBIT, AICPA Standards",
+    grc_platforms:
+      "IBM OpenPages, ServiceNow IRM (Risk, Policy, Compliance, Vendor Risk), SharePoint, JIRA, Azure DevOps",
+    cloud_security:
+      "Cloud Security Controls, IT General Controls (ITGC), SaaS/PaaS/IaaS Environments, Technical Control Assessments",
+    audit_compliance:
+      "Internal Controls Design & Operation, Compliance Documentation, Risk Assessments, Audit Execution, Control Maturity Improvements",
+    methodologies:
+      "Agile Scrum, Risk-Based Auditing, Third-Party Risk Management, Incident Management, Root Cause Analysis, Continuous Compliance Monitoring",
+    certifications:
+      "CISSP (ISC²), CISM (ISACA), CRISC (ISACA), CISA (ISACA), ISO/IEC 27001:2022 Lead Auditor",
+  },
+  experience: [
+    {
+      company: "Government of Alberta",
+      location: "Alberta, Canada",
+      role: "Audit, Risk & Compliance Team Lead",
+      dates: "Oct 2023 – Present",
+      achievements: [
+        "Lead audit and risk assessment projects across the enterprise, serving as primary liaison between internal/external auditors and subject matter experts",
+        "Work with cross-functional teams to collect, validate, and organize documentation supporting audit and risk assessment activities",
+        "Collaborate with stakeholders to align policies with business and regulatory requirements reducing audit findings by 70%",
+        "Partner with relevant stakeholders to evaluate and enhance control design and implementation in alignment with ISO 27001, NIST, COBIT, AICPA, and other industry standards",
+        "Ensure continuous compliance by monitoring high-risk controls, tracking remediation progress in OpenPages, and validating fixes across multiple systems",
+        "Developed and maintained security and privacy policies mapped to ISO 27001 and NIST CSF, ensuring organization-wide compliance and alignment",
+        "Coordinate remediation activities for audit findings, devising and executing effective plans to address identified vulnerabilities and ensure compliance",
+        "Proactively identify emerging trends and potential audit focus areas, providing invaluable insights to leadership for informed decision-making",
+        "Formulate comprehensive mitigation strategies to bolster audit preparedness and enhance organizational resilience",
+      ],
+    },
+    {
+      company: "KPMG Canada",
+      location: "Canada",
+      role: "Senior Consultant - Technology Risk Consulting",
+      dates: "Jan 2022 – Oct 2023",
+      achievements: [
+        "Led major control audits including ITGC, PCI, and SOC, and remediation efforts to ensure compliance with regulatory and industry requirements",
+        "Conducted operational and technical risks across cloud, on-premise infrastructure, applications, and identity management systems, identifying control gaps and mitigation strategies",
+        "Monitored emerging risks and evolving compliance requirements, updating risk registers and advising leadership on new threats and regulatory expectations",
+        "Produced audit reports, risk dashboards, and compliance metrics for executive leadership to support decision-making and prioritization",
+        "Translated technical security and configuration findings into clear business impacts for leadership and stakeholders",
+        "Conducted SOC readiness assessments and supported clients in improving the design and implementation of controls aligned with industry and regulatory requirements",
+        "Conducted third-party risk assessments and vendor assurance reviews to validate control posture and regulatory alignment",
+        "Evaluated the adequacy of controls in new and existing systems, identifying areas for enhancement and devising strategies to mitigate potential risks",
+        "Provided invaluable assurance and coordination during disaster recovery events, ensuring seamless business continuity and minimal disruption",
+        "Facilitated comprehensive incident management reviews, driving continuous improvement through root-cause analysis and corrective action implementation",
+      ],
+    },
+    {
+      company: "PricewaterhouseCoopers LLP Canada",
+      location: "Canada",
+      role: "Senior Risk Assurance Specialist",
+      dates: "Mar 2021 – Jan 2022",
+      achievements: [
+        "Performed Tests of Design and Operating Effectiveness for IT General Controls and Business Process Controls, followed by the creation of detailed and executive-facing reports",
+        "Conducted risk assessments and provide actionable recommendations to reduce risk exposure",
+        "Conducted impact and risk analyses for issues identified during control testing, and developed remediation and continuous assurance plans prioritizing high-criticality risks to improve overall control maturity",
+        "Supported external audits and customer security assessments by providing evidence and responding to questionnaires, ensuring alignment with regulatory and contractual requirements",
+        "Collaborated closely with operational teams to gather and analyze supporting audit documentation, ensuring thoroughness and accuracy in audit processes",
+        "Provided regular, insightful reporting on information security risk and compliance to key stakeholders, enabling informed risk management decisions",
+        "Leveraged audit reports and findings to drive continuous service improvements, fostering a culture of innovation and excellence within the organization",
+      ],
+    },
+    {
+      company: "Evergreen Professional Services",
+      location: "Nigeria",
+      role: "Audit Consultant",
+      dates: "Jan 2015 – Apr 2019",
+      achievements: [
+        "Assessed technical, operational, and security risks across diverse systems and environments, identifying control gaps and advising cross-functional teams on remediation and compliance improvements (ISO 27001, NIST CSF, ITGC, automated controls)",
+        "Reported on information security program effectiveness to stakeholders",
+        "Conducted post-implementation reviews to ensure project compliance",
+        "Evaluated emerging technology risks and industry practices",
+      ],
+    },
+  ],
+  education: [
+    {
+      degree: "Certified Information Systems Security Professional (CISSP)",
+      institution: "ISC²",
+    },
+    {
+      degree: "Certified Information Security Manager (CISM)",
+      institution: "ISACA",
+    },
+    {
+      degree: "Certified in Risk and Information Systems Control (CRISC)",
+      institution: "ISACA",
+    },
+    {
+      degree: "Certified Information Systems Auditor (CISA)",
+      institution: "ISACA",
+    },
+    {
+      degree: "ISO/IEC 27001:2022 Lead Auditor",
+      institution: "Mastermind Training Institute",
+    },
+    {
+      degree: "Agile Scrum Essentials",
+      institution: "Professional Designations",
+    },
+    {
+      degree: "Bachelor of Science (B.Sc.), Accounting",
+      institution: "Babcock University, Nigeria",
+    },
+  ],
+  keyProjects: [
+    {
+      name: "Enterprise GRC Platform Implementation",
+      description:
+        "Led the implementation and optimization of IBM OpenPages for enterprise-wide risk management, policy compliance, and vendor risk tracking at Government of Alberta",
+      technologies: [
+        "IBM OpenPages",
+        "ServiceNow IRM",
+        "Risk Registers",
+        "Compliance Dashboards",
+      ],
+      impact:
+        "Reduced audit findings by 70% through improved policy alignment and continuous compliance monitoring",
+    },
+    {
+      name: "SOC 2 Readiness & Certification Program",
+      description:
+        "Conducted comprehensive SOC readiness assessments for multiple clients at KPMG, guiding them through control design improvements and certification preparation",
+      technologies: [
+        "SOC 2 Framework",
+        "Control Testing",
+        "Gap Analysis",
+        "Remediation Planning",
+      ],
+      impact:
+        "Successfully supported clients in achieving SOC 2 Type II certification with minimal findings",
+    },
+    {
+      name: "Cloud Security & ITGC Assessment Program",
+      description:
+        "Developed and executed technical risk assessments across cloud-native, SaaS, PaaS, and IaaS environments, evaluating security controls and compliance posture",
+      technologies: [
+        "Cloud Security Controls",
+        "ITGC Testing",
+        "NIST CSF",
+        "ISO 27001",
+      ],
+      impact:
+        "Identified critical control gaps and implemented mitigation strategies improving overall security posture",
+    },
+  ],
+};
+
+// ============================================
 // CANDIDATE REGISTRY
 // ============================================
 
 export const candidates: Record<string, CandidateData> = {
   "johnson-ojo": johnsonOjoData,
   "ade-ojo": adeOjoData,
+  "opeyemi-akinduro": opeyemiAkinduroData,
 };
 
 export const candidateList = Object.values(candidates);
@@ -316,6 +484,14 @@ export const formatCandidateExperience = (candidate: CandidateData): string => {
 - Software Tools: ${candidate.skills.software_tools}
 - Methodologies: ${candidate.skills.methodologies}
 - Certifications: ${candidate.skills.certifications}`;
+  } else if (isGRCCandidate(candidate)) {
+    skillsText = `
+- Frameworks & Standards: ${candidate.skills.frameworks_standards}
+- GRC Platforms: ${candidate.skills.grc_platforms}
+- Cloud Security: ${candidate.skills.cloud_security}
+- Audit & Compliance: ${candidate.skills.audit_compliance}
+- Methodologies: ${candidate.skills.methodologies}
+- Certifications: ${candidate.skills.certifications}`;
   }
 
   const experienceText = experience
@@ -340,26 +516,54 @@ ${exp.achievements.map((a) => `- ${a}`).join("\n")}`
         .join("\n")
     : "";
 
-  const professionalSummary =
-    candidate.professionType === "developer"
-      ? `A proficient Front-End Developer with ${candidate.yearsOfExperience} years of experience in building high-performance, scalable web applications. Skilled in modern web technologies including JavaScript, TypeScript, Redux, React, NextJS, and HTML/CSS, with a strong focus on creating responsive and user-friendly interfaces. Experienced in agile methodologies and cross-functional teamwork, consistently delivering projects with a keen eye for detail and maintainability.`
-      : `Dynamic and experienced Senior Payroll Specialist and supervisor with over ${candidate.yearsOfExperience} years of expertise in managing and implementing global payroll systems. Proven leadership in overseeing complex technical payroll projects, enhancing system functionalities, and ensuring compliance with various regulations. Adept at collaborating with cross-functional teams, optimizing processes through data analytics, and maintaining adherence to best practices in payroll management.`;
+  const getProfessionalSummary = (): string => {
+    switch (candidate.professionType) {
+      case "developer":
+        return `A proficient Front-End Developer with ${candidate.yearsOfExperience} years of experience in building high-performance, scalable web applications. Skilled in modern web technologies including JavaScript, TypeScript, Redux, React, NextJS, and HTML/CSS, with a strong focus on creating responsive and user-friendly interfaces. Experienced in agile methodologies and cross-functional teamwork, consistently delivering projects with a keen eye for detail and maintainability.`;
+      case "payroll":
+        return `Dynamic and experienced Senior Payroll Specialist and supervisor with over ${candidate.yearsOfExperience} years of expertise in managing and implementing global payroll systems. Proven leadership in overseeing complex technical payroll projects, enhancing system functionalities, and ensuring compliance with various regulations. Adept at collaborating with cross-functional teams, optimizing processes through data analytics, and maintaining adherence to best practices in payroll management.`;
+      case "grc":
+        return `Senior Governance, Risk, & Compliance Analyst with over ${candidate.yearsOfExperience} years of experience in information security, compliance, and risk management across consulting, technology, financial services, and public sector environments. Proven expertise in implementing regulatory frameworks and standards, with hands-on proficiency in ServiceNow IRM Modules and GRC automation platforms. Skilled at driving risk assessments, audit execution, and control maturity improvements while partnering with technical and non-technical stakeholders. Strong analytical and communication abilities with a track record of simplifying complex requirements and supporting secure, compliant business operations.`;
+      default:
+        return "";
+    }
+  };
 
-  const highlightsText =
-    candidate.professionType === "developer"
-      ? `- Knowledge of Agile development methodologies demonstrating deep understanding of iterative development, continuous integration, and collaborative project management
+  const getHighlightsText = (): string => {
+    switch (candidate.professionType) {
+      case "developer":
+        return `- Knowledge of Agile development methodologies demonstrating deep understanding of iterative development, continuous integration, and collaborative project management
 - Extensive knowledge in advanced React concepts, JavaScript, HTML5, and CSS, showcasing expertise in building sophisticated, dynamic web interfaces and single-page applications
 - In-depth understanding of web standards, including cross-browser compatibility, progressive enhancement, graceful degradation, and responsive design
 - Deep understanding of REST principles with substantial experience in working with and implementing backend APIs
 - Mastery in foundations of the web, including vanilla JavaScript, HTML, and CSS3, ensuring robust and efficient coding practices
-- Proven track record of mentoring junior developers and leading cross-functional teams in enterprise environments`
-      : `- Strong understanding of payroll and human resources operations, benefits, compensation, and pension policies
+- Proven track record of mentoring junior developers and leading cross-functional teams in enterprise environments`;
+      case "payroll":
+        return `- Strong understanding of payroll and human resources operations, benefits, compensation, and pension policies
 - Demonstrated capability as a Payroll Systems Lead in overseeing major global payroll implementations, ensuring successful deployment and efficient operation across different geographical locations
 - Legislative Knowledge relevant to payroll including Income Tax Act, Employment Insurance Act, Canada Pension Plan Act, Employment and Labour Standards Acts, Provincial Income Tax Acts, and Workers' Compensation Legislation, HOOPP, OMERS
 - Excellent project planning skills and the ability to manage complex conflicting priorities
 - Ability to exercise sound judgement, maintain appropriate internal controls and interpret payroll rules
 - Strong communication and interpersonal skills and working effectively with senior management and Leadership staff at all levels
 - Strong customer service, problem solving, organizational, planning, communication, analytical and negotiation skills`;
+      case "grc":
+        return `- Proficient in implementing and maintaining privacy and security frameworks/standards such as ISO 27001, SOC 2, NIST CSF, GDPR, PCI DSS to ensure regulatory compliance
+- Hands-on experience with GRC automation platforms and tools (IBM OpenPages, ServiceNow IRM) and collaboration tools such as SharePoint, JIRA, DevOps
+- Demonstrated experience in the design and operation of internal controls and compliance documentation
+- Strong understanding of cloud security controls, IT General Controls, and technical control assessments
+- Broad experience in assessing cloud-native, SaaS, PaaS, and IaaS environments
+- Demonstrated ability to translate technical risks into business impact for executive stakeholders
+- Excellent presentation, reporting, and written communication skills
+- Effective project management and ability to lead audits, remediation efforts, and compliance initiatives
+- Strong analytical capacity to bring structure to complex, ambiguous environments
+- Proven cross-functional collaboration skills; experienced influencing teams across Security, Engineering, Product, Legal, and Operations`;
+      default:
+        return "";
+    }
+  };
+
+  const professionalSummary = getProfessionalSummary();
+  const highlightsText = getHighlightsText();
 
   return `**Name:** ${name}
 **Contact:** ${email} | ${phone} | ${location}${linkedin ? ` | ${linkedin}` : ""}
@@ -380,9 +584,9 @@ ${keyProjectsText}
 
 ${experienceText}
 
-**Education:**
+**${candidate.professionType === "grc" ? "Education & Certifications" : "Education"}:**
 ${educationText}`;
 };
 
 // Legacy export for backward compatibility
-export { isDeveloperCandidate, isPayrollCandidate };
+export { isDeveloperCandidate, isPayrollCandidate, isGRCCandidate };

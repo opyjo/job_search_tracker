@@ -279,7 +279,7 @@ export const generateResumePdf = (
   });
 
   // Education
-  addSectionHeading("Education");
+  addSectionHeading(candidate.professionType === "grc" ? "Education & Certifications" : "Education");
   
   resume.education.forEach((edu) => {
     checkNewPage(8);
