@@ -284,7 +284,7 @@ export const opeyemiAkinduroData: GRCCandidateData = {
   location: "Canada",
   linkedin: "",
   yearsOfExperience: "10+",
-  professionalTitle: "Senior Governance, Risk, & Compliance Analyst",
+  professionalTitle: "Experienced Governance, Risk, and Compliance (GRC) Leader",
   skills: {
     frameworks_standards:
       "ISO 27001, SOC 2, NIST CSF, GDPR, PCI DSS, COBIT, AICPA Standards",
@@ -523,7 +523,7 @@ ${exp.achievements.map((a) => `- ${a}`).join("\n")}`
       case "payroll":
         return `Dynamic and experienced Senior Payroll Specialist and supervisor with over ${candidate.yearsOfExperience} years of expertise in managing and implementing global payroll systems. Proven leadership in overseeing complex technical payroll projects, enhancing system functionalities, and ensuring compliance with various regulations. Adept at collaborating with cross-functional teams, optimizing processes through data analytics, and maintaining adherence to best practices in payroll management.`;
       case "grc":
-        return `Senior Governance, Risk, & Compliance Analyst with over ${candidate.yearsOfExperience} years of experience in information security, compliance, and risk management across consulting, technology, financial services, and public sector environments. Proven expertise in implementing regulatory frameworks and standards, with hands-on proficiency in ServiceNow IRM Modules and GRC automation platforms. Skilled at driving risk assessments, audit execution, and control maturity improvements while partnering with technical and non-technical stakeholders. Strong analytical and communication abilities with a track record of simplifying complex requirements and supporting secure, compliant business operations.`;
+        return `Experienced Governance, Risk, and Compliance (GRC) Leader with over ${candidate.yearsOfExperience} years of experience in information security, compliance, and risk management across consulting, technology, financial services, and public sector environments. Proven expertise in implementing regulatory frameworks and standards, with hands-on proficiency in ServiceNow IRM Modules and GRC automation platforms. Skilled at driving risk assessments, audit execution, and control maturity improvements while partnering with technical and non-technical stakeholders. Strong analytical and communication abilities with a track record of simplifying complex requirements and supporting secure, compliant business operations.`;
       default:
         return "";
     }
