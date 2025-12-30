@@ -1,4 +1,4 @@
-import { CandidateData, isDeveloperCandidate, isPayrollCandidate } from "./types";
+import { CandidateData, isDeveloperCandidate, isPayrollCandidate, isGRCCandidate } from "./types";
 import { candidateData as defaultCandidate } from "./candidateData";
 
 // ============================================
@@ -6,14 +6,31 @@ import { candidateData as defaultCandidate } from "./candidateData";
 // ============================================
 
 export const generateCoverLetterSystemPrompt = (candidate: CandidateData): string => {
-  const skillsSummary = isDeveloperCandidate(candidate)
-    ? `${candidate.skills.languages}, ${candidate.skills.frameworks_libraries}`
-    : `${candidate.skills.payroll_systems}, ${candidate.skills.hris_applications}`;
+  const getSkillsSummary = (): string => {
+    if (isDeveloperCandidate(candidate)) {
+      return `${candidate.skills.languages}, ${candidate.skills.frameworks_libraries}`;
+    } else if (isPayrollCandidate(candidate)) {
+      return `${candidate.skills.payroll_systems}, ${candidate.skills.hris_applications}`;
+    } else if (isGRCCandidate(candidate)) {
+      return `${candidate.skills.frameworks_standards}, ${candidate.skills.grc_platforms}`;
+    }
+    return "";
+  };
 
+  const getProfessionDescription = (): string => {
+    if (isDeveloperCandidate(candidate)) {
+      return "front-end development";
+    } else if (isPayrollCandidate(candidate)) {
+      return "payroll management and system implementation";
+    } else if (isGRCCandidate(candidate)) {
+      return "governance, risk, and compliance";
+    }
+    return "professional services";
+  };
+
+  const skillsSummary = getSkillsSummary();
   const keyAchievements = candidate.experience[0].achievements.slice(0, 5);
-  const professionDescription = isDeveloperCandidate(candidate)
-    ? "front-end development"
-    : "payroll management and system implementation";
+  const professionDescription = getProfessionDescription();
 
   return `You are an expert career coach and professional writer with 15 years of experience crafting compelling cover letters that land interviews. Your letters are personalized, genuine, and professionally tailored.
 
@@ -161,11 +178,19 @@ const generateExampleOpenings = (candidate: CandidateData): string => {
 "[Company]'s commitment to [specific value/initiative] resonates deeply with my experience delivering enterprise-scale solutions at ${currentCompany}. I am excited to bring my expertise in [relevant skill] to your [specific team/project]."`;
   }
 
+  if (isGRCCandidate(candidate)) {
+    return `**Conversational (for tech companies):**
+"When I learned about [Company]'s commitment to security and compliance, I was immediately drawn to the opportunity. My experience leading GRC initiatives at ${currentCompany} has prepared me well to contribute to your team's mission."
+
+**Professional (for enterprises/consulting):**
+"[Company]'s commitment to [specific compliance standard/security initiative] aligns closely with my experience driving risk management and compliance programs at ${currentCompany}. I am confident that my expertise in implementing frameworks like ISO 27001, SOC 2, and NIST CSF would be valuable to your organization."`;
+  }
+
   return `**Conversational (for modern companies):**
 "When I learned about [Company]'s approach to [specific HR/payroll initiative], I was immediately drawn to the opportunity. My experience implementing payroll systems at ${currentCompany} has prepared me well to contribute to your team's success."
 
 **Professional (for enterprises/healthcare):**
-"[Company]'s commitment to [specific value/compliance standard] aligns closely with my experience ensuring payroll compliance at ${currentCompany}. I am confident that my expertise in ${candidate.professionType === "payroll" ? "payroll system implementation and legislative compliance" : "technical solutions"} would be valuable to your organization."`;
+"[Company]'s commitment to [specific value/compliance standard] aligns closely with my experience ensuring payroll compliance at ${currentCompany}. I am confident that my expertise in payroll system implementation and legislative compliance would be valuable to your organization."`;
 };
 
 // ============================================
