@@ -1,16 +1,22 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
-import { ATSResumeTitleRequest } from "@/lib/types";
+import { ATSResumeTitleRequest, AnthropicModelOption } from "@/lib/types";
 
 interface ATSResumeBuilderFormProps {
   isLoading: boolean;
+  modelOptions: AnthropicModelOption[];
+  selectedModel: string;
+  onSelectedModelChange: (value: string) => void;
   initialValues?: ATSResumeTitleRequest | null;
   onSubmit: (values: ATSResumeTitleRequest) => void;
 }
 
 const ATSResumeBuilderForm = ({
   isLoading,
+  modelOptions,
+  selectedModel,
+  onSelectedModelChange,
   initialValues,
   onSubmit,
 }: ATSResumeBuilderFormProps) => {
@@ -30,6 +36,7 @@ const ATSResumeBuilderForm = ({
     if (!isFormValid) return;
     onSubmit({
       jobDescription: jobDescription.trim(),
+      anthropicModel: selectedModel,
     });
   };
 
@@ -42,6 +49,29 @@ const ATSResumeBuilderForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label
+          htmlFor="ats-anthropic-model"
+          className="block text-sm font-medium text-slate-700 mb-1.5"
+        >
+          AI Model
+        </label>
+        <select
+          id="ats-anthropic-model"
+          value={selectedModel}
+          onChange={(event) => onSelectedModelChange(event.target.value)}
+          disabled={isLoading || modelOptions.length === 0}
+          aria-label="Select Anthropic model"
+          className="w-full px-4 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all"
+        >
+          {modelOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.displayName} ({option.id})
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* ── Job Description ── */}
       <div>
         <label

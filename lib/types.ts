@@ -241,10 +241,16 @@ export interface ATSContactInfo {
 
 export interface ATSResumeTitleRequest {
   jobDescription: string;
+  anthropicModel?: string;
   companyName?: string;
   jobTitleFromPosting?: string;
   locationOrWorkModel?: string;
   extraNotes?: string;
+}
+
+export interface AnthropicModelOption {
+  id: string;
+  displayName: string;
 }
 
 export interface GeneratedJobTitleOption {

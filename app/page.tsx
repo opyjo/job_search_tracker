@@ -44,6 +44,11 @@ type ActiveView =
   | "companies"
   | "tracker";
 
+interface ViewTheme {
+  active: string;
+  inactive: string;
+}
+
 const isErrorResponse = (response: APIResponse): response is ErrorResponse => {
   return "error" in response;
 };
@@ -203,18 +208,6 @@ export default function Home() {
     }
   };
 
-  const viewDescriptions: Record<ActiveView, string> = {
-    tailor:
-      "Paste a job description and get a tailored resume optimized for ATS systems and human recruiters.",
-    coverletter:
-      "Generate a personalized cover letter tailored to the company and role.",
-    atsbuilder:
-      "Generate title suggestions from the current job, accept or edit your title, then build an ATS-focused resume.",
-    companies:
-      "Your curated list of target companies organized by priority and interview difficulty.",
-    tracker:
-      "Track your job applications, interview stages, and follow-up dates all in one place.",
-  };
 
   // Get candidate initials for avatar
   const getCandidateInitials = (name: string) => {
@@ -239,47 +232,142 @@ export default function Home() {
     }
   };
 
+  const getViewTheme = (view: Exclude<ActiveView, "atsbuilder">): ViewTheme => {
+    switch (view) {
+      case "tailor":
+        return {
+          active: "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm",
+          inactive:
+            "text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-100",
+        };
+      case "coverletter":
+        return {
+          active: "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-sm",
+          inactive:
+            "text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-100",
+        };
+      case "companies":
+        return {
+          active: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm",
+          inactive:
+            "text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100",
+        };
+      case "tracker":
+        return {
+          active: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-sm",
+          inactive:
+            "text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100",
+        };
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50/30 to-orange-50/20">
+    <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_#fbbf24_0,_transparent_30%),radial-gradient(circle_at_top_right,_#fb7185_0,_transparent_28%),linear-gradient(135deg,_#020617_0%,_#111827_45%,_#312e81_100%)]">
       {/* Decorative background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-200/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-amber-100/10 to-transparent rounded-full" />
+        <div className="absolute left-1/2 top-0 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-300/20 blur-3xl" />
+        <div className="absolute -right-24 top-48 h-80 w-80 rounded-full bg-fuchsia-400/20 blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:48px_48px]" />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8 lg:py-12">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-6 lg:px-8 lg:py-10">
         {/* Header */}
-        <header className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+        <header className="mb-8 grid overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 shadow-2xl shadow-black/20 backdrop-blur-2xl lg:grid-cols-[320px_1fr]">
+          <button
+            onClick={() => {
+              setActiveView("atsbuilder");
+              handleReset();
+            }}
+            onKeyDown={(e) =>
+              handleKeyDown(e, () => {
+                setActiveView("atsbuilder");
+                handleReset();
+              })
+            }
+            aria-label="Open ATS Resume Builder"
+            aria-pressed={activeView === "atsbuilder"}
+            tabIndex={0}
+            className={`order-1 flex flex-col justify-between p-6 text-left transition-all duration-300 lg:order-2 lg:p-10 ${
+              activeView === "atsbuilder"
+                ? "bg-gradient-to-br from-amber-400/30 via-orange-500/20 to-rose-500/10"
+                : "hover:bg-white/5"
+            }`}
+          >
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
+                Featured Tool
+              </div>
+              <div className="mb-4 flex items-center gap-4">
+                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-lg transition-all duration-300 ${
+                  activeView === "atsbuilder"
+                    ? "bg-gradient-to-br from-amber-300 via-orange-400 to-rose-500 shadow-orange-500/40"
+                    : "bg-gradient-to-br from-amber-400/60 to-orange-500/60 shadow-orange-500/20"
+                }`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-7 w-7 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16h8M8 12h8m-8-4h8m4 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight text-white lg:text-4xl">
+                    ATS Resume Builder
+                  </h1>
+                  <p className="mt-1 text-sm font-medium text-amber-100/80">
+                    AI-powered, job-description driven
+                  </p>
+                </div>
+              </div>
+              <p className="max-w-xl text-base leading-7 text-slate-200 lg:text-lg">
+                Paste a job description — AI generates tailored titles, rewrites your experience
+                roles to match the JD, and exports a clean ATS-ready document.
+              </p>
             </div>
-            <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-800 via-amber-700 to-orange-600 bg-clip-text text-transparent">
-              Resume Tailor AI
-            </h1>
-          </div>
-          <p className="text-slate-600 text-lg max-w-2xl mx-auto mb-6">
-            {viewDescriptions[activeView]}
-          </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {["Job-title suggestions", "Per-role title editing", "Word & PDF export", "ATS score"].map((feat) => (
+                <span
+                  key={feat}
+                  className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200"
+                >
+                  {feat}
+                </span>
+              ))}
+            </div>
+            <div className={`mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 self-start ${
+              activeView === "atsbuilder"
+                ? "bg-white text-orange-600 shadow-lg"
+                : "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md shadow-orange-500/30 hover:from-amber-500 hover:to-orange-600"
+            }`}>
+              {activeView === "atsbuilder" ? "Currently active" : "Open Builder →"}
+            </div>
+          </button>
 
-          {/* Candidate Selector */}
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex bg-white/80 backdrop-blur-sm p-1.5 rounded-2xl shadow-lg shadow-slate-200/50 border border-white gap-2">
+          <div className="order-2 border-t border-white/10 bg-slate-950/35 p-4 lg:order-1 lg:border-r lg:border-t-0 lg:p-5">
+            <div className="mb-5 space-y-3 text-left">
+              <div className="text-left">
+                <p className="text-sm font-semibold text-white">Choose workspace</p>
+                <p className="text-xs text-slate-300">
+                  ATS builder first, then switch profiles or tools when needed.
+                </p>
+              </div>
+              <div className="inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
+                Modern AI workflow
+              </div>
+            </div>
+
+            {/* Candidate Selector */}
+            <div className="grid gap-3">
               {candidateList.map((candidate) => (
                 <button
                   key={candidate.id}
@@ -288,19 +376,19 @@ export default function Home() {
                     handleKeyDown(e, () => handleCandidateChange(candidate.id))
                   }
                   aria-label={`Select ${candidate.name}`}
-                  aria-selected={activeCandidateId === candidate.id}
+                  aria-pressed={activeCandidateId === candidate.id}
                   tabIndex={0}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200
+                  className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200
                             ${
                               activeCandidateId === candidate.id
                                 ? `bg-gradient-to-r ${getProfileGradient(
                                     candidate.professionType
-                                  )} text-white shadow-md`
-                                : "text-slate-600 hover:bg-slate-100"
+                                  )} border-white/30 text-white shadow-lg shadow-black/10`
+                                : "border-white/10 bg-white/10 text-slate-100 hover:bg-white/15"
                             }`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold
                                 ${
                                   activeCandidateId === candidate.id
                                     ? "bg-white/20 text-white"
@@ -316,7 +404,7 @@ export default function Home() {
                       className={`text-sm font-semibold ${
                         activeCandidateId === candidate.id
                           ? "text-white"
-                          : "text-slate-800"
+                          : "text-slate-100"
                       }`}
                     >
                       {candidate.name.replace(/\s*\(.*?\)\s*/g, "")}
@@ -325,7 +413,7 @@ export default function Home() {
                       className={`text-xs ${
                         activeCandidateId === candidate.id
                           ? "text-white/80"
-                          : "text-slate-500"
+                          : "text-slate-300"
                       }`}
                     >
                       {candidate.professionalTitle}
@@ -334,10 +422,9 @@ export default function Home() {
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* View Toggle */}
-          <div className="inline-flex bg-slate-100 p-1 rounded-xl flex-wrap justify-center gap-1">
+            {/* View Toggle */}
+            <div className="mt-5 grid gap-2 rounded-2xl border border-white/10 bg-slate-950/30 p-2 sm:grid-cols-2 lg:grid-cols-1">
             <button
               onClick={() => {
                 setActiveView("tailor");
@@ -350,14 +437,16 @@ export default function Home() {
                 })
               }
               aria-label="Resume Tailor view"
-              aria-selected={activeView === "tailor"}
+              aria-pressed={activeView === "tailor"}
               tabIndex={0}
-              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
-                        ${
-                          activeView === "tailor"
-                            ? "bg-white text-slate-800 shadow-sm"
-                            : "text-slate-600 hover:text-slate-800"
-                        }`}
+              {...(() => {
+                const theme = getViewTheme("tailor");
+                return {
+                  className: `justify-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 ${
+                    activeView === "tailor" ? theme.active : theme.inactive
+                  }`,
+                };
+              })()}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -389,14 +478,18 @@ export default function Home() {
                 })
               }
               aria-label="Cover Letter view"
-              aria-selected={activeView === "coverletter"}
+              aria-pressed={activeView === "coverletter"}
               tabIndex={0}
-              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
-                        ${
-                          activeView === "coverletter"
-                            ? "bg-white text-slate-800 shadow-sm"
-                            : "text-slate-600 hover:text-slate-800"
-                        }`}
+              {...(() => {
+                const theme = getViewTheme("coverletter");
+                return {
+                  className: `justify-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 ${
+                    activeView === "coverletter"
+                      ? theme.active
+                      : theme.inactive
+                  }`,
+                };
+              })()}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -422,14 +515,18 @@ export default function Home() {
                 handleKeyDown(e, () => setActiveView("companies"))
               }
               aria-label="Target Companies view"
-              aria-selected={activeView === "companies"}
+              aria-pressed={activeView === "companies"}
               tabIndex={0}
-              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
-                        ${
-                          activeView === "companies"
-                            ? "bg-white text-slate-800 shadow-sm"
-                            : "text-slate-600 hover:text-slate-800"
-                        }`}
+              {...(() => {
+                const theme = getViewTheme("companies");
+                return {
+                  className: `justify-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 ${
+                    activeView === "companies"
+                      ? theme.active
+                      : theme.inactive
+                  }`,
+                };
+              })()}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -450,58 +547,21 @@ export default function Home() {
               <span className="sm:hidden">Companies</span>
             </button>
             <button
-              onClick={() => {
-                setActiveView("atsbuilder");
-                handleReset();
-              }}
-              onKeyDown={(e) =>
-                handleKeyDown(e, () => {
-                  setActiveView("atsbuilder");
-                  handleReset();
-                })
-              }
-              aria-label="ATS Resume Builder view"
-              aria-selected={activeView === "atsbuilder"}
-              tabIndex={0}
-              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
-                        ${
-                          activeView === "atsbuilder"
-                            ? "bg-white text-slate-800 shadow-sm"
-                            : "text-slate-600 hover:text-slate-800"
-                        }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 16h8M8 12h8m-8-4h8m4 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2z"
-                />
-              </svg>
-              <span className="hidden sm:inline">ATS Resume Builder</span>
-              <span className="sm:hidden">ATS</span>
-            </button>
-            <button
               onClick={() => setActiveView("tracker")}
               onKeyDown={(e) =>
                 handleKeyDown(e, () => setActiveView("tracker"))
               }
               aria-label="Application Tracker view"
-              aria-selected={activeView === "tracker"}
+              aria-pressed={activeView === "tracker"}
               tabIndex={0}
-              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
-                        ${
-                          activeView === "tracker"
-                            ? "bg-white text-slate-800 shadow-sm"
-                            : "text-slate-600 hover:text-slate-800"
-                        }`}
+              {...(() => {
+                const theme = getViewTheme("tracker");
+                return {
+                  className: `justify-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 ${
+                    activeView === "tracker" ? theme.active : theme.inactive
+                  }`,
+                };
+              })()}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -521,11 +581,12 @@ export default function Home() {
               <span className="hidden sm:inline">Application Tracker</span>
               <span className="sm:hidden">Tracker</span>
             </button>
+            </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <div className="max-w-4xl mx-auto">
+        <div className="mx-auto max-w-5xl">
           {activeView === "tailor" && (
             <>
               {appState === "input" && (

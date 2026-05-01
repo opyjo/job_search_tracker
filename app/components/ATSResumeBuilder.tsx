@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ATSResumeBuilderForm from "./ATSResumeBuilderForm";
 import ATSJobTitleReview from "./ATSJobTitleReview";
 import DynamicATSResumePreview from "./DynamicATSResumePreview";
 import LoadingState from "./LoadingState";
 import {
   ATSExperienceTitleSuggestion,
+  AnthropicModelOption,
   ATSResumeRequest,
   ATSResumeTitleRequest,
   ATSResumeTitleResponse,
   DynamicATSResumeResponse,
 } from "@/lib/types";
+import { DEFAULT_ANTHROPIC_MODEL } from "@/lib/anthropicModels";
 
 type ATSBuilderState = "input" | "titleReview" | "loading" | "result" | "error";
 
@@ -33,20 +35,52 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
   const [experienceTitleOverrides, setExperienceTitleOverrides] = useState<
     Record<string, string>
   >({});
+  const [modelOptions, setModelOptions] = useState<AnthropicModelOption[]>([
+    { id: DEFAULT_ANTHROPIC_MODEL, displayName: DEFAULT_ANTHROPIC_MODEL },
+  ]);
+  const [selectedModel, setSelectedModel] = useState(DEFAULT_ANTHROPIC_MODEL);
   const [resumeData, setResumeData] = useState<DynamicATSResumeResponse | null>(
     null
   );
 
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        const response = await fetch("/api/anthropic-models");
+        const data = (await response.json()) as { models?: AnthropicModelOption[] };
+        if (!response.ok || !data.models || data.models.length === 0) {
+          return;
+        }
+        const resolvedModels = data.models;
+        setModelOptions(resolvedModels);
+        setSelectedModel((previousModel) =>
+          resolvedModels.some((model) => model.id === previousModel)
+            ? previousModel
+            : resolvedModels[0].id
+        );
+      } catch {
+        // Keep fallback default model option.
+      }
+    };
+
+    loadModels();
+  }, []);
+
   const handleGenerateTitles = async (values: ATSResumeTitleRequest) => {
+    const payloadValues: ATSResumeTitleRequest = {
+      ...values,
+      anthropicModel: selectedModel,
+    };
+
     setState("loading");
     setErrorMessage("");
-    setLastFormValues(values);
+    setLastFormValues(payloadValues);
 
     try {
       const response = await fetch("/api/generate-ats-job-titles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payloadValues),
       });
       const data = (await response.json()) as ATSResumeTitleResponse & {
         error?: string;
@@ -226,6 +260,9 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
       {state === "input" && (
         <ATSResumeBuilderForm
           isLoading={false}
+          modelOptions={modelOptions}
+          selectedModel={selectedModel}
+          onSelectedModelChange={setSelectedModel}
           initialValues={lastFormValues}
           onSubmit={handleGenerateTitles}
         />

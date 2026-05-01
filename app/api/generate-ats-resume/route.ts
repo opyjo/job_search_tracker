@@ -7,12 +7,14 @@ import {
 } from "@/lib/atsResumePrompt";
 import { ATS_FIXED_PROFILE } from "@/lib/atsFixedProfile";
 import { atsResumeProfile, formatATSResumeProfileExperience } from "@/lib/atsResumeProfile";
+import { DEFAULT_ANTHROPIC_MODEL } from "@/lib/anthropicModels";
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as ATSResumeRequest;
     const trimmedJD = body.jobDescription?.trim();
     const trimmedTitle = body.targetJobTitle?.trim();
+    const selectedModel = body.anthropicModel?.trim() || DEFAULT_ANTHROPIC_MODEL;
 
     if (!trimmedJD) {
       return NextResponse.json(
@@ -65,7 +67,7 @@ export async function POST(request: NextRequest) {
         : "None provided.";
 
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: selectedModel,
       max_tokens: 4096,
       temperature: 0.25,
       system: generateATSResumeSystemPrompt(),
