@@ -91,6 +91,15 @@ export const generateResumePdf = (
   doc.text(name, (PAGE_WIDTH - nameWidth) / 2, yPos);
   yPos += 8;
 
+  if (resume.target_job_title) {
+    doc.setFontSize(FONT_SIZE.subheading);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(COLORS.black);
+    const titleWidth = doc.getTextWidth(resume.target_job_title);
+    doc.text(resume.target_job_title, (PAGE_WIDTH - titleWidth) / 2, yPos);
+    yPos += 6;
+  }
+
   // Contact Info (centered)
   doc.setFontSize(FONT_SIZE.small);
   doc.setFont("helvetica", "normal");

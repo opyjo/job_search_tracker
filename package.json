@@ -12,9 +12,11 @@
     "@anthropic-ai/sdk": "^0.71.1",
     "@supabase/supabase-js": "^2.86.2",
     "docx": "^9.5.1",
+    "docxtemplater": "^3.68.6",
     "file-saver": "^2.0.5",
     "jspdf": "^3.0.4",
     "next": "16.0.10",
+    "pizzip": "^3.2.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },

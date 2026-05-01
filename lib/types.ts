@@ -185,6 +185,7 @@ export interface KeyProject {
 }
 
 export interface TailoredResume {
+  target_job_title?: string;
   professional_summary: string;
   highlights_of_qualifications?: string[];
   skills: Skills;
@@ -225,6 +226,108 @@ export interface ErrorResponse {
 }
 
 export type APIResponse = ResumeResponse | ErrorResponse;
+
+// ============================================
+// ATS RESUME BUILDER TYPES (standalone, role-agnostic)
+// ============================================
+
+export interface ATSContactInfo {
+  name: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  linkedin?: string;
+}
+
+export interface ATSResumeTitleRequest {
+  jobDescription: string;
+  companyName?: string;
+  jobTitleFromPosting?: string;
+  locationOrWorkModel?: string;
+  extraNotes?: string;
+}
+
+export interface GeneratedJobTitleOption {
+  title: string;
+  confidence: number;
+  rationale: string;
+  sourceKeywords: string[];
+}
+
+export interface ATSExperienceTitleSuggestion {
+  id: string;
+  company: string;
+  dates: string;
+  current_role: string;
+  suggested_title: string;
+  alternate_titles: string[];
+  rationale: string;
+}
+
+export interface ATSExperienceTitleOverride {
+  id: string;
+  title: string;
+}
+
+export interface ATSResumeRequest extends ATSResumeTitleRequest {
+  targetJobTitle: string;
+  experienceTitleOverrides?: ATSExperienceTitleOverride[];
+}
+
+export interface ATSResumeTitleResponse {
+  recommended_title: string;
+  title_options: GeneratedJobTitleOption[];
+  experience_title_suggestions: ATSExperienceTitleSuggestion[];
+}
+
+// Dynamic, role-agnostic resume shape
+export interface DynamicATSSkillGroup {
+  label: string;
+  items: string[];
+}
+
+export interface DynamicATSExperience {
+  company: string;
+  location?: string;
+  role: string;
+  dates: string;
+  achievements: string[];
+}
+
+export interface DynamicATSEducation {
+  degree: string;
+  institution: string;
+  location?: string;
+}
+
+export interface DynamicATSExtraSection {
+  heading: string;
+  bullets: string[];
+}
+
+export interface DynamicATSResume {
+  target_job_title: string;
+  contact: ATSContactInfo;
+  professional_summary: string;
+  highlights: string[];
+  skills: DynamicATSSkillGroup[];
+  experience: DynamicATSExperience[];
+  education: DynamicATSEducation[];
+  additional_sections?: DynamicATSExtraSection[];
+}
+
+export interface DynamicATSOptimizationNotes {
+  ats_score: number;
+  keywords_incorporated: string[];
+  keywords_missing?: string[];
+  match_score: "High" | "Medium" | "Low";
+  suggestions: string;
+}
+
+export interface DynamicATSResumeResponse {
+  dynamic_resume: DynamicATSResume;
+  optimization_notes: DynamicATSOptimizationNotes;
+}
 
 // ============================================
 // HELPER TYPE GUARDS

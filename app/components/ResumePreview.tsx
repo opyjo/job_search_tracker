@@ -114,6 +114,9 @@ const ResumePreview = ({
     if (candidate.linkedin) contactParts.push(candidate.linkedin);
 
     let text = `${candidate.name}\n`;
+    if (tailored_resume.target_job_title) {
+      text += `${tailored_resume.target_job_title}\n`;
+    }
     text += `${contactParts.join(" | ")}\n\n`;
 
     text += `PROFESSIONAL SUMMARY\n${professional_summary}\n\n`;
@@ -737,6 +740,11 @@ const ResumePreview = ({
             <h1 className="text-3xl font-bold text-slate-900 mb-2">
               {candidate.name}
             </h1>
+            {tailored_resume.target_job_title && (
+              <p className="text-slate-700 font-semibold mb-2">
+                {tailored_resume.target_job_title}
+              </p>
+            )}
             <p className="text-slate-600 text-sm">{contactParts.join(" | ")}</p>
           </div>
 

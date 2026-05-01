@@ -56,6 +56,22 @@ export const generateResumeDocx = async (
               }),
             ],
           }),
+          ...(resume.target_job_title
+            ? [
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  spacing: { after: 80 },
+                  children: [
+                    new TextRun({
+                      text: resume.target_job_title,
+                      bold: true,
+                      size: SUBHEADING_SIZE,
+                      font: FONT_FAMILY,
+                    }),
+                  ],
+                }),
+              ]
+            : []),
 
           // Contact Information
           new Paragraph({

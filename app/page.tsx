@@ -8,6 +8,7 @@ import LoadingState from "./components/LoadingState";
 import TargetCompanies from "./components/TargetCompanies";
 import CoverLetterForm from "./components/CoverLetterForm";
 import CoverLetterPreview from "./components/CoverLetterPreview";
+import ATSResumeBuilder from "./components/ATSResumeBuilder";
 import Toast, { ToastItem, useToast } from "./components/Toast";
 import {
   ResumeResponse,
@@ -36,7 +37,12 @@ const ApplicationTracker = dynamic(
 );
 
 type AppState = "input" | "loading" | "result" | "error";
-type ActiveView = "tailor" | "coverletter" | "companies" | "tracker";
+type ActiveView =
+  | "tailor"
+  | "coverletter"
+  | "atsbuilder"
+  | "companies"
+  | "tracker";
 
 const isErrorResponse = (response: APIResponse): response is ErrorResponse => {
   return "error" in response;
@@ -202,6 +208,8 @@ export default function Home() {
       "Paste a job description and get a tailored resume optimized for ATS systems and human recruiters.",
     coverletter:
       "Generate a personalized cover letter tailored to the company and role.",
+    atsbuilder:
+      "Generate title suggestions from the current job, accept or edit your title, then build an ATS-focused resume.",
     companies:
       "Your curated list of target companies organized by priority and interview difficulty.",
     tracker:
@@ -440,6 +448,45 @@ export default function Home() {
               </svg>
               <span className="hidden sm:inline">Target Companies</span>
               <span className="sm:hidden">Companies</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveView("atsbuilder");
+                handleReset();
+              }}
+              onKeyDown={(e) =>
+                handleKeyDown(e, () => {
+                  setActiveView("atsbuilder");
+                  handleReset();
+                })
+              }
+              aria-label="ATS Resume Builder view"
+              aria-selected={activeView === "atsbuilder"}
+              tabIndex={0}
+              className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2
+                        ${
+                          activeView === "atsbuilder"
+                            ? "bg-white text-slate-800 shadow-sm"
+                            : "text-slate-600 hover:text-slate-800"
+                        }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 16h8M8 12h8m-8-4h8m4 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2z"
+                />
+              </svg>
+              <span className="hidden sm:inline">ATS Resume Builder</span>
+              <span className="sm:hidden">ATS</span>
             </button>
             <button
               onClick={() => setActiveView("tracker")}
@@ -689,6 +736,8 @@ export default function Home() {
               <TargetCompanies />
             </div>
           )}
+
+          {activeView === "atsbuilder" && <ATSResumeBuilder onToast={addToast} />}
 
           {activeView === "tracker" && (
             <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
