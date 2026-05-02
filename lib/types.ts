@@ -77,6 +77,7 @@ interface BaseCandidateData {
   professionalTitle: string;
   experience: CandidateExperience[];
   education: CandidateEducation[];
+  certifications?: CandidateEducation[];
   keyProjects?: CandidateKeyProject[];
 }
 
@@ -246,6 +247,7 @@ export interface ATSResumeTitleRequest {
   jobTitleFromPosting?: string;
   locationOrWorkModel?: string;
   extraNotes?: string;
+  includeCertifications?: boolean;
 }
 
 export interface AnthropicModelOption {

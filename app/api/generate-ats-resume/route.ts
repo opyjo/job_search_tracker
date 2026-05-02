@@ -11,11 +11,12 @@ import { DEFAULT_ANTHROPIC_MODEL } from "@/lib/anthropicModels";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as ATSResumeRequest & { pageLength?: number };
+    const body = (await request.json()) as ATSResumeRequest & { pageLength?: number; includeCertifications?: boolean };
     const trimmedJD = body.jobDescription?.trim();
     const trimmedTitle = body.targetJobTitle?.trim();
     const selectedModel = body.anthropicModel?.trim() || DEFAULT_ANTHROPIC_MODEL;
     const pageLength: 2 | 3 = body.pageLength === 3 ? 3 : 2;
+    const includeCertifications = body.includeCertifications ?? false;
 
     if (!trimmedJD) {
       return NextResponse.json(
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     const anthropic = new Anthropic({ apiKey });
-    const candidateProfile = formatATSResumeProfileExperience();
+    const candidateProfile = formatATSResumeProfileExperience(includeCertifications);
     const candidateContactLine = [
       ATS_FIXED_PROFILE.name,
       ATS_FIXED_PROFILE.email,

@@ -11,6 +11,8 @@ interface ATSResumeBuilderFormProps {
   initialValues?: ATSResumeTitleRequest | null;
   pageLength: 2 | 3;
   onPageLengthChange: (value: 2 | 3) => void;
+  includeCertifications: boolean;
+  onIncludeCertificationsChange: (value: boolean) => void;
   onSubmit: (values: ATSResumeTitleRequest) => void;
 }
 
@@ -22,6 +24,8 @@ const ATSResumeBuilderForm = ({
   initialValues,
   pageLength,
   onPageLengthChange,
+  includeCertifications,
+  onIncludeCertificationsChange,
   onSubmit,
 }: ATSResumeBuilderFormProps) => {
   const [jobDescription, setJobDescription] = useState(
@@ -41,6 +45,7 @@ const ATSResumeBuilderForm = ({
     onSubmit({
       jobDescription: jobDescription.trim(),
       anthropicModel: selectedModel,
+      includeCertifications,
     });
   };
 
@@ -134,6 +139,25 @@ const ATSResumeBuilderForm = ({
         </div>
         <p className="text-xs text-slate-400 mt-1.5">
           2 pages recommended for &lt; 8 years experience
+        </p>
+      </div>
+
+      {/* ── Include Certifications ── */}
+      <div>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={includeCertifications}
+            onChange={(e) => onIncludeCertificationsChange(e.target.checked)}
+            disabled={isLoading}
+            className="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400 disabled:cursor-not-allowed"
+          />
+          <span className="text-sm font-medium text-slate-700">
+            Include Certifications (CPA, ACCA)
+          </span>
+        </label>
+        <p className="text-xs text-slate-400 mt-1.5 ml-7">
+          Adds CPA Ontario, ACCA, and Advanced Diploma in Accounting to the Education section
         </p>
       </div>
 

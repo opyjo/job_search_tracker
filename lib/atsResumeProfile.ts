@@ -96,10 +96,31 @@ export const atsResumeProfile: DeveloperCandidateData = {
       institution: "Obafemi Awolowo University",
     },
   ],
+  certifications: [
+    {
+      degree: "Chartered Professional Accountant (CPA)",
+      institution: "CPA Ontario",
+    },
+    {
+      degree: "Association of Chartered Certified Accountants (ACCA)",
+      institution: "ACCA (UK/Global)",
+    },
+    {
+      degree: "Advanced Diploma in Accounting and Business",
+      institution: "ACCA Pathway",
+    },
+  ],
 };
 
-export const formatATSResumeProfileExperience = (): string =>
-  formatCandidateExperience(atsResumeProfile);
+export const formatATSResumeProfileExperience = (includeCertifications = false): string => {
+  const profile = includeCertifications && atsResumeProfile.certifications
+    ? {
+        ...atsResumeProfile,
+        education: [...atsResumeProfile.education, ...atsResumeProfile.certifications],
+      }
+    : atsResumeProfile;
+  return formatCandidateExperience(profile);
+};
 
 export const formatATSResumeProfileRoles = (): string =>
   atsResumeProfile.experience

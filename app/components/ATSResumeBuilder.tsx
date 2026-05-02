@@ -43,6 +43,7 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
     null
   );
   const [pageLength, setPageLength] = useState<2 | 3>(2);
+  const [includeCertifications, setIncludeCertifications] = useState(false);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -268,6 +269,8 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
           initialValues={lastFormValues}
           pageLength={pageLength}
           onPageLengthChange={setPageLength}
+          includeCertifications={includeCertifications}
+          onIncludeCertificationsChange={setIncludeCertifications}
           onSubmit={handleGenerateTitles}
         />
       )}

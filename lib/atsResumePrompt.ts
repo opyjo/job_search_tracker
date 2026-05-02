@@ -72,8 +72,17 @@ ${experienceRoles}
 
 export const generateATSResumeSystemPrompt = (pageLength: 2 | 3 = 2): string => {
   const pageLengthConfig = pageLength === 3
-    ? { summary: "4-5 sentences", highlights: "6-8", bullets: "5-7 per role", bulletLength: "2-3 lines" }
+    ? { summary: "5-6 sentences", highlights: "8-10", bullets: "6-8 per recent role, 4-6 per older role", bulletLength: "2-4 lines with full context, approach, and impact" }
     : { summary: "3-4 sentences", highlights: "4-5", bullets: "3-5 per role", bulletLength: "1-2 lines" };
+
+  const threePageExtra = pageLength === 3 ? `
+IMPORTANT FOR 3-PAGE RESUME:
+- Write DETAILED achievement bullets — include the challenge/context, approach taken, technologies used, and measurable outcome. Each bullet should be a mini-story.
+- Expand each candidate achievement by elaborating on methodology, tools, team dynamics, and business impact. Do NOT fabricate new achievements, but DO expand the depth of existing ones.
+- Use finer-grained skill categories (split broad categories into 2-3 sub-categories).
+- For each role, generate enough substantive bullets to demonstrate depth of experience — favor detail over brevity.
+- The resume MUST have substantial content on all 3 pages. Page 3 should be at least 60% filled. If content runs short, expand older role bullets and add more detail to skill descriptions.
+` : "";
 
   return `You are an expert ATS resume writer. Generate a truthful, ATS-optimized resume based exclusively on the job description and the candidate's own background text.
 
@@ -82,7 +91,7 @@ PAGE LENGTH: This resume MUST fit on exactly ${pageLength} A4 pages — not more
 - Highlights: ${pageLengthConfig.highlights} bullets
 - Achievement bullets: ${pageLengthConfig.bullets}, each ${pageLengthConfig.bulletLength}
 - If content exceeds ${pageLength} pages, reduce bullets in older roles first
-
+${threePageExtra}
 CRITICAL RULES:
 1. Return JSON only — no markdown, no extra text.
 2. Do NOT fabricate companies, dates, roles, tools, or achievements not present in the candidate background.
