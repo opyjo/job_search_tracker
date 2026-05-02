@@ -11,7 +11,7 @@ import { DEFAULT_ANTHROPIC_MODEL } from "@/lib/anthropicModels";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as ATSResumeRequest & { pageLength?: number; includeCertifications?: boolean };
+    const body = (await request.json()) as ATSResumeRequest & { pageLength?: number; includeCertifications?: boolean; additionalKeywords?: string[] };
     const trimmedJD = body.jobDescription?.trim();
     const trimmedTitle = body.targetJobTitle?.trim();
     const selectedModel = body.anthropicModel?.trim() || DEFAULT_ANTHROPIC_MODEL;
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
             ...body,
             jobDescription: trimmedJD,
             targetJobTitle: trimmedTitle,
-          }, candidateProfile, candidateContactLine, experienceTitleOverridesText),
+          }, candidateProfile, candidateContactLine, experienceTitleOverridesText, body.additionalKeywords),
         },
       ],
     });

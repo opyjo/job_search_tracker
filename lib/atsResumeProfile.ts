@@ -8,7 +8,7 @@ export const atsResumeProfile: DeveloperCandidateData = {
   email: "johnsonoojo@gmail.com",
   phone: "(437)-778-5339",
   location: "Mississauga, ON",
-  linkedin: "linkedin.com/in/opeyemi-ojo-86649629",
+  linkedin: "",
   yearsOfExperience: "10+",
   professionalTitle: "Frontend Engineer",
   skills: {

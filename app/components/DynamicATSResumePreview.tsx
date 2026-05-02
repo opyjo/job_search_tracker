@@ -15,6 +15,8 @@ interface DynamicATSResumePreviewProps {
   onReset: () => void;
   onBackToForm: () => void;
   onToast?: (message: string, type: "success" | "error" | "info") => void;
+  onRegenerateWithKeywords?: (keywords: string[]) => void;
+  isRegenerating?: boolean;
 }
 
 const SectionHeading = ({ children }: { children: React.ReactNode }) => (
@@ -100,14 +102,49 @@ const DynamicATSResumePreview = ({
   onReset,
   onBackToForm,
   onToast,
+  onRegenerateWithKeywords,
+  isRegenerating = false,
 }: DynamicATSResumePreviewProps) => {
   const [activeTab, setActiveTab] = useState<"preview" | "optimization">(
     "preview"
   );
   const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(
+    new Set()
+  );
 
   const { dynamic_resume: resume, optimization_notes } = data;
+
+  const handleKeywordToggle = (keyword: string) => {
+    setSelectedKeywords((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(keyword)) {
+        newSet.delete(keyword);
+      } else {
+        newSet.add(keyword);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAllKeywords = () => {
+    if (optimization_notes.keywords_missing) {
+      if (
+        selectedKeywords.size === optimization_notes.keywords_missing.length
+      ) {
+        setSelectedKeywords(new Set());
+      } else {
+        setSelectedKeywords(new Set(optimization_notes.keywords_missing));
+      }
+    }
+  };
+
+  const handleRegenerateWithKeywords = () => {
+    if (selectedKeywords.size > 0 && onRegenerateWithKeywords) {
+      onRegenerateWithKeywords(Array.from(selectedKeywords));
+    }
+  };
   const safeName = resume.contact.name.replace(/\s+/g, "_") || "Resume";
   const dateStamp = new Date().toISOString().split("T")[0];
   const fileName = `${safeName}_ATS_${dateStamp}`;
@@ -418,23 +455,167 @@ const DynamicATSResumePreview = ({
           {optimization_notes.keywords_missing &&
             optimization_notes.keywords_missing.length > 0 && (
               <section>
-                <h3 className="text-base font-bold text-slate-800 mb-3">
-                  Skills Gap (Keywords Missing)
-                </h3>
-                <p className="text-sm text-slate-500 mb-3">
-                  These keywords appear in the job description but are not
-                  present in your provided background.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {optimization_notes.keywords_missing.map((kw, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm font-medium border border-red-200"
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-bold text-slate-800">
+                    Skills Gap (Keywords Missing)
+                  </h3>
+                  {onRegenerateWithKeywords && (
+                    <button
+                      onClick={handleSelectAllKeywords}
+                      className="text-sm text-slate-500 hover:text-slate-700 underline transition-colors"
+                      aria-label={
+                        selectedKeywords.size ===
+                        optimization_notes.keywords_missing.length
+                          ? "Deselect all keywords"
+                          : "Select all keywords"
+                      }
                     >
-                      {kw}
-                    </span>
-                  ))}
+                      {selectedKeywords.size ===
+                      optimization_notes.keywords_missing.length
+                        ? "Deselect All"
+                        : "Select All"}
+                    </button>
+                  )}
                 </div>
+                <p className="text-sm text-slate-500 mb-3">
+                  {onRegenerateWithKeywords
+                    ? "Select keywords you have experience with to include them in your regenerated resume:"
+                    : "These keywords appear in the job description but are not present in your provided background."}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {optimization_notes.keywords_missing.map((kw, i) => {
+                    const isSelected = selectedKeywords.has(kw);
+                    return (
+                      <label
+                        key={i}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border cursor-pointer transition-all duration-200
+                        ${
+                          isSelected
+                            ? "bg-amber-100 text-amber-800 border-amber-300 ring-2 ring-amber-200"
+                            : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                        }
+                        ${!onRegenerateWithKeywords ? "cursor-default" : ""}
+                      `}
+                      >
+                        {onRegenerateWithKeywords && (
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleKeywordToggle(kw)}
+                            className="sr-only"
+                            aria-label={`Select ${kw}`}
+                          />
+                        )}
+                        {onRegenerateWithKeywords && (
+                          <span
+                            className={`w-4 h-4 rounded border flex items-center justify-center text-xs transition-colors
+                          ${
+                            isSelected
+                              ? "bg-amber-500 border-amber-500 text-white"
+                              : "border-red-300 bg-white"
+                          }`}
+                          >
+                            {isSelected && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-3 w-3"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={3}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </span>
+                        )}
+                        {kw}
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {/* Regenerate Button */}
+                {onRegenerateWithKeywords && selectedKeywords.size > 0 && (
+                  <div className="mt-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium text-amber-800">
+                          {selectedKeywords.size} keyword
+                          {selectedKeywords.size !== 1 ? "s" : ""} selected
+                        </p>
+                        <p className="text-xs text-amber-600">
+                          These will be incorporated into your regenerated
+                          resume
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleRegenerateWithKeywords}
+                        disabled={isRegenerating}
+                        className="px-5 py-2.5 text-sm font-semibold text-white
+                               bg-gradient-to-r from-amber-500 to-orange-500
+                               rounded-lg shadow-lg shadow-amber-500/25
+                               hover:from-amber-600 hover:to-orange-600
+                               hover:shadow-xl hover:shadow-amber-500/30
+                               focus:outline-none focus:ring-4 focus:ring-amber-300
+                               transition-all duration-200
+                               disabled:opacity-50 disabled:cursor-not-allowed
+                               flex items-center gap-2"
+                        aria-label={`Regenerate resume with ${selectedKeywords.size} selected keywords`}
+                      >
+                        {isRegenerating ? (
+                          <>
+                            <svg
+                              className="animate-spin h-4 w-4"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              aria-hidden="true"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              />
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              />
+                            </svg>
+                            Regenerating...
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                              />
+                            </svg>
+                            Regenerate with Keywords
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </section>
             )}
 

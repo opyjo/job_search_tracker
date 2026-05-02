@@ -44,6 +44,7 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
   );
   const [pageLength, setPageLength] = useState<2 | 3>(2);
   const [includeCertifications, setIncludeCertifications] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -171,6 +172,52 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
     }
   };
 
+  const handleRegenerateWithKeywords = async (keywords: string[]) => {
+    if (!lastFormValues || !selectedTitle.trim()) return;
+
+    setIsRegenerating(true);
+
+    const payload = {
+      ...lastFormValues,
+      targetJobTitle: selectedTitle.trim(),
+      experienceTitleOverrides: experienceTitleSuggestions.map((suggestion) => ({
+        id: suggestion.id,
+        title:
+          experienceTitleOverrides[suggestion.id]?.trim() ||
+          suggestion.suggested_title,
+      })),
+      pageLength,
+      additionalKeywords: keywords,
+    };
+
+    try {
+      const response = await fetch("/api/generate-ats-resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await response.json()) as DynamicATSResumeResponse & {
+        error?: string;
+      };
+
+      if (!response.ok || data.error) {
+        const message = data.error || "Failed to regenerate ATS resume.";
+        onToast(message, "error");
+        return;
+      }
+
+      setResumeData(data);
+      onToast(
+        `Resume regenerated with ${keywords.length} additional keyword${keywords.length !== 1 ? "s" : ""}.`,
+        "success"
+      );
+    } catch {
+      onToast("Failed to connect to the server. Please try again.", "error");
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
   const handleReset = () => {
     setState("input");
     setErrorMessage("");
@@ -206,6 +253,8 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
         onBackToForm={handleBackToForm}
         onReset={handleReset}
         onToast={onToast}
+        onRegenerateWithKeywords={handleRegenerateWithKeywords}
+        isRegenerating={isRegenerating}
       />
     );
   }

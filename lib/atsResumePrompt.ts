@@ -175,8 +175,18 @@ export const formatATSResumeUserMessage = (
   request: ATSResumeRequest,
   candidateProfile: string,
   candidateContactLine: string,
-  experienceTitleOverridesText: string
+  experienceTitleOverridesText: string,
+  additionalKeywords?: string[]
 ): string => {
+  const additionalKeywordsSection =
+    additionalKeywords && additionalKeywords.length > 0
+      ? `\n\n<additional_keywords_to_incorporate>
+The candidate confirms they have experience with these keywords.
+Incorporate them naturally into the resume:
+${additionalKeywords.join(", ")}
+</additional_keywords_to_incorporate>`
+      : "";
+
   return `Generate an ATS resume using the accepted target title, the job description, and the candidate's background below.
 
 <target_job_title>
@@ -204,5 +214,5 @@ ${experienceTitleOverridesText}
 
 <candidate_background>
 ${candidateProfile}
-</candidate_background>`;
+</candidate_background>${additionalKeywordsSection}`;
 };
