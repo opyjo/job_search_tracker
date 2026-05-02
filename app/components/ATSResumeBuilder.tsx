@@ -42,6 +42,7 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
   const [resumeData, setResumeData] = useState<DynamicATSResumeResponse | null>(
     null
   );
+  const [pageLength, setPageLength] = useState<2 | 3>(2);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -128,7 +129,7 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
     setState("loading");
     setErrorMessage("");
 
-    const payload: ATSResumeRequest = {
+    const payload = {
       ...lastFormValues,
       targetJobTitle: selectedTitle.trim(),
       experienceTitleOverrides: experienceTitleSuggestions.map((suggestion) => ({
@@ -137,6 +138,7 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
           experienceTitleOverrides[suggestion.id]?.trim() ||
           suggestion.suggested_title,
       })),
+      pageLength,
     };
 
     try {
@@ -264,6 +266,8 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
           selectedModel={selectedModel}
           onSelectedModelChange={setSelectedModel}
           initialValues={lastFormValues}
+          pageLength={pageLength}
+          onPageLengthChange={setPageLength}
           onSubmit={handleGenerateTitles}
         />
       )}

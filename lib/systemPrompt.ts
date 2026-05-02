@@ -6,7 +6,8 @@ import { CandidateData, isDeveloperCandidate } from "./types";
 
 export const generateSystemPrompt = (
   candidate: CandidateData,
-  additionalKeywords: string[] = []
+  additionalKeywords: string[] = [],
+  pageLength: 2 | 3 = 2
 ): string => {
   const additionalKeywordsSection =
     additionalKeywords.length > 0
@@ -25,19 +26,52 @@ IMPORTANT:
 `
       : "";
 
+  const pageLengthConfig = pageLength === 3
+    ? {
+        summaryRange: "4-5",
+        highlightsRange: "6-8",
+        bulletCounts: { first: "10-12", second: "8-10", third: "6-8", fourth: "4-6" },
+        bulletLengthRange: "1.5-2.5 lines",
+      }
+    : {
+        summaryRange: "3-4",
+        highlightsRange: "5-6",
+        bulletCounts: { first: "8-10", second: "6-8", third: "4-6", fourth: "3-4" },
+        bulletLengthRange: "1-2 lines",
+      };
+
   const basePrompt = `You are an expert resume writer and career coach with 15 years of experience helping professionals land jobs at top companies. Your specialty is tailoring resumes to match specific job descriptions while maintaining authenticity and truthfulness.${additionalKeywordsSection}
 
-## CRITICAL REQUIREMENT: EXACTLY TWO A4 PAGES
+## CRITICAL REQUIREMENT: EXACTLY ${pageLength} A4 PAGES
 This candidate has ${
     candidate.yearsOfExperience
-  } years of experience. You MUST generate a resume that fits EXACTLY on 2 A4 pages:
-- NOT less than 2 pages (too short looks inexperienced)
-- NOT more than 2 pages (too long won't be read)
+  } years of experience. You MUST generate a resume that fits EXACTLY on ${pageLength} A4 pages:
+- NOT less than ${pageLength} pages (too short looks inexperienced)
+- NOT more than ${pageLength} pages (too long won't be read)
 
-To achieve exactly 2 pages:
-- Professional Summary: 3-4 sentences (not more)
-- Highlights of Qualifications: 5-6 bullet points
-${generateExperienceBulletGuidelines(candidate)}
+To achieve exactly ${pageLength} pages:
+- Professional Summary: ${pageLengthConfig.summaryRange} sentences (not more)
+- Highlights of Qualifications: ${pageLengthConfig.highlightsRange} bullet points
+${generateExperienceBulletGuidelines(candidate, pageLengthConfig)}
+
+## Achievement Bullet Guidelines (Modern Resume Best Practices)
+Every bullet MUST follow this structure: [Strong Action Verb] + [What you did + scope/context] + [Quantified impact/result]
+
+Examples of GOOD bullets:
+- "Spearheaded migration of 12 microservices from monolithic architecture to event-driven design, reducing deployment time by 73% and enabling 3x faster feature releases"
+- "Architected real-time analytics pipeline processing 2M+ daily events using Kafka and Spark, improving data freshness from 24 hours to under 5 minutes"
+
+Examples of BAD bullets (too vague — NEVER write bullets like these):
+- "Worked on microservices migration project"
+- "Built analytics pipeline"
+
+Rules:
+- Start every bullet with a STRONG action verb (Spearheaded, Architected, Orchestrated, Drove, Engineered, Championed, Transformed, Streamlined — NEVER "Responsible for", "Helped with", "Worked on")
+- Include at least one metric per bullet where possible (%, $, time, scale, count)
+- Show IMPACT on the business, not just the task performed
+- Weave relevant JD keywords naturally into context (don't force them)
+- Add scope context: team size, budget, user base, system scale
+- Each bullet should be ${pageLengthConfig.bulletLengthRange} — detailed enough to impress, concise enough to scan
 
 ## Your Task
 
@@ -60,7 +94,7 @@ Return a JSON object with the following structure:
 
 {
   "tailored_resume": {
-    "professional_summary": "A 3-4 sentence summary tailored to this specific role, mentioning years of experience and key ${
+    "professional_summary": "A ${pageLengthConfig.summaryRange} sentence summary tailored to this specific role, mentioning years of experience and key ${
       candidate.professionType === "developer" ? "technologies" : "competencies"
     }",
     "highlights_of_qualifications": [
@@ -72,7 +106,7 @@ Return a JSON object with the following structure:
     ],
 ${generateSkillsOutputFormat(candidate)}
     "experience": [
-${generateExperienceOutputFormat(candidate)}
+${generateExperienceOutputFormat(candidate, pageLengthConfig)}
     ],
     "key_projects": [
       {
@@ -146,10 +180,10 @@ Also list **keywords_missing** - important keywords from the job that couldn't b
       : "competencies or systems"
   } from the job description
 - Include a notable achievement or scale indicator
-- Keep to 3-4 sentences maximum
+- Keep to ${pageLengthConfig.summaryRange} sentences maximum
 
 ### 1b. Highlights of Qualifications (NEW - IMPORTANT)
-- Include 5-6 key qualifications that match the job requirements
+- Include ${pageLengthConfig.highlightsRange} key qualifications that match the job requirements
 - Each highlight should be a substantive statement about expertise or experience
 ${
   candidate.professionType === "developer"
@@ -166,8 +200,8 @@ ${generateSkillCategoriesGuidelines(candidate)}
 - Put the most relevant skills first in each category
 - Remove skills that are irrelevant to this specific role
 
-### 3. Experience Section (MUST FIT 2 PAGES TOTAL)
-${generateExperienceGuidelines(candidate)}
+### 3. Experience Section (MUST FIT ${pageLength} PAGES TOTAL)
+${generateExperienceGuidelines(candidate, pageLengthConfig)}
 - Reorder achievements within each role to put most relevant first
 - Rewrite achievement bullets to emphasize aspects relevant to the target role
 - Include metrics and quantified results wherever possible
@@ -178,7 +212,7 @@ ${generateExperienceGuidelines(candidate)}
       ? "architecture and technical decisions"
       : "system implementations and process improvements"
   }
-- Keep bullets CONCISE - quality over quantity
+- Keep bullets to ${pageLengthConfig.bulletLengthRange} - quality over quantity
 - Select only the MOST RELEVANT achievements for the target role
 
 ### 4. Key Projects Section
@@ -241,14 +275,14 @@ ${generateExperienceGuidelines(candidate)}
       : "Led payroll team in implementing new ADP system across multiple unionized groups, training 5 staff members on new processes"
   }"
 
-## Response Guidelines - EXACTLY 2 A4 PAGES (NOT MORE, NOT LESS)
+## Response Guidelines - EXACTLY ${pageLength} A4 PAGES (NOT MORE, NOT LESS)
 
 1. Always return valid JSON
-2. **STRICT LENGTH: The resume MUST fit on exactly 2 A4 pages** - this is critical
+2. **STRICT LENGTH: The resume MUST fit on exactly ${pageLength} A4 pages** - this is critical
 3. Focus on the last 10 years of experience
-4. **Professional Summary: 3-4 sentences MAX** - concise but impactful
-5. **Highlights of Qualifications: 5-6 bullets** - each 1 line
-${generateResponseBulletGuidelines(candidate)}
+4. **Professional Summary: ${pageLengthConfig.summaryRange} sentences MAX** - concise but impactful
+5. **Highlights of Qualifications: ${pageLengthConfig.highlightsRange} bullets** - each 1 line
+${generateResponseBulletGuidelines(candidate, pageLengthConfig)}
 9. **Skills section: Keep concise** - list format, not paragraphs
 10. ${
     candidate.professionType === "grc"
@@ -258,7 +292,7 @@ ${generateResponseBulletGuidelines(candidate)}
 11. Be specific and concrete with metrics, but keep bullets concise
 12. Incorporate keywords naturally from the job description
 13. Quality over quantity - select the MOST relevant achievements, don't include everything
-14. If content exceeds 2 pages, reduce the number of bullets in older roles first
+14. If content exceeds ${pageLength} pages, reduce the number of bullets in older roles first
 
 ## Edge Cases
 
@@ -281,24 +315,36 @@ ${generateResponseBulletGuidelines(candidate)}
 // HELPER FUNCTIONS FOR DYNAMIC CONTENT
 // ============================================
 
+interface BulletConfig {
+  summaryRange: string;
+  highlightsRange: string;
+  bulletCounts: { first: string; second: string; third: string; fourth: string };
+  bulletLengthRange: string;
+}
+
 const generateExperienceBulletGuidelines = (
-  candidate: CandidateData
+  candidate: CandidateData,
+  config: BulletConfig
 ): string => {
   const experiences = candidate.experience;
+  const { bulletCounts, bulletLengthRange } = config;
 
-  if (experiences.length >= 3) {
-    return `- Most recent role (${experiences[0].company}): 6-8 achievement bullets
-- Second role (${experiences[1].company}): 5-6 achievement bullets  
-- Third role (${experiences[2].company}): 3-4 achievement bullets
-- Keep each bullet to 1-2 lines maximum`;
-  } else if (experiences.length === 2) {
-    return `- Most recent role (${experiences[0].company}): 7-9 achievement bullets
-- Second role (${experiences[1].company}): 5-6 achievement bullets
-- Keep each bullet to 1-2 lines maximum`;
+  const lines: string[] = [];
+  if (experiences.length >= 1) {
+    lines.push(`- Most recent role (${experiences[0].company}): ${bulletCounts.first} achievement bullets`);
   }
+  if (experiences.length >= 2) {
+    lines.push(`- Second role (${experiences[1].company}): ${bulletCounts.second} achievement bullets`);
+  }
+  if (experiences.length >= 3) {
+    lines.push(`- Third role (${experiences[2].company}): ${bulletCounts.third} achievement bullets`);
+  }
+  if (experiences.length >= 4) {
+    lines.push(`- Fourth role (${experiences[3].company}): ${bulletCounts.fourth} achievement bullets`);
+  }
+  lines.push(`- Keep each bullet to ${bulletLengthRange} maximum`);
 
-  return `- Most recent role: 8-10 achievement bullets
-- Keep each bullet to 1-2 lines maximum`;
+  return lines.join("\n");
 };
 
 const generateSkillsOutputFormat = (candidate: CandidateData): string => {
@@ -321,12 +367,13 @@ const generateSkillsOutputFormat = (candidate: CandidateData): string => {
     },`;
 };
 
-const generateExperienceOutputFormat = (candidate: CandidateData): string => {
+const generateExperienceOutputFormat = (candidate: CandidateData, config: BulletConfig): string => {
   const experiences = candidate.experience;
+  const counts = [config.bulletCounts.first, config.bulletCounts.second, config.bulletCounts.third, config.bulletCounts.fourth];
 
   return experiences
     .map((exp, index) => {
-      const bulletCount = index === 0 ? "6-8" : index === 1 ? "5-6" : "3-4";
+      const bulletCount = counts[index] || config.bulletCounts.fourth;
       return `      {
         "company": "${exp.company} (${bulletCount} achievements)",
         "location": "${exp.location}",
@@ -335,7 +382,7 @@ const generateExperienceOutputFormat = (candidate: CandidateData): string => {
         "summary": "One sentence describing your role${
           index === 0 ? ", tailored to the target job" : ""
         }",
-        "achievements": ["${bulletCount} concise achievement bullets, 1-2 lines each"]
+        "achievements": ["${bulletCount} detailed achievement bullets, ${config.bulletLengthRange} each"]
       }`;
     })
     .join(",\n");
@@ -351,37 +398,40 @@ const generateSkillCategoriesGuidelines = (
   return "- Group logically: Payroll Systems, HRIS Applications, Legislative Knowledge, Software Tools, Methodologies";
 };
 
-const generateExperienceGuidelines = (candidate: CandidateData): string => {
+const generateExperienceGuidelines = (candidate: CandidateData, config: BulletConfig): string => {
   const experiences = candidate.experience;
+  const counts = [config.bulletCounts.first, config.bulletCounts.second, config.bulletCounts.third, config.bulletCounts.fourth];
+  const lines: string[] = [];
 
-  if (experiences.length >= 3) {
-    return `- **${experiences[0].company} (most recent): 6-8 bullets** - each 1-2 lines max
-- **${experiences[1].company}: 5-6 bullets** - each 1-2 lines max
-- **${experiences[2].company}: 3-4 bullets** - each 1-2 lines max`;
-  } else if (experiences.length === 2) {
-    return `- **${experiences[0].company} (most recent): 7-9 bullets** - each 1-2 lines max
-- **${experiences[1].company}: 5-6 bullets** - each 1-2 lines max`;
-  }
+  experiences.forEach((exp, index) => {
+    const count = counts[index] || config.bulletCounts.fourth;
+    const label = index === 0 ? ` (most recent)` : "";
+    lines.push(`- **${exp.company}${label}: ${count} bullets** - each ${config.bulletLengthRange} max`);
+  });
 
-  return `- **${experiences[0].company}: 8-10 bullets** - each 1-2 lines max`;
+  return lines.join("\n");
 };
 
-const generateResponseBulletGuidelines = (candidate: CandidateData): string => {
+const generateResponseBulletGuidelines = (candidate: CandidateData, config: BulletConfig): string => {
   const experiences = candidate.experience;
+  const counts = [config.bulletCounts.first, config.bulletCounts.second, config.bulletCounts.third, config.bulletCounts.fourth];
+  const ordinals = ["Most recent", "Second", "Third", "Fourth"];
+  const lines: string[] = [];
 
-  if (experiences.length >= 3) {
-    return `6. **Most recent role (${experiences[0].company}): 6-8 achievement bullets** - each 1-2 lines max
-7. **Second role (${experiences[1].company}): 5-6 achievement bullets** - each 1-2 lines max
-8. **Third role (${experiences[2].company}): 3-4 achievement bullets** - each 1-2 lines max`;
-  } else if (experiences.length === 2) {
-    return `6. **Most recent role (${experiences[0].company}): 7-9 achievement bullets** - each 1-2 lines max
-7. **Second role (${experiences[1].company}): 5-6 achievement bullets** - each 1-2 lines max
-8. (No third role)`;
+  for (let i = 0; i < 3; i++) {
+    if (i < experiences.length) {
+      const count = counts[i] || config.bulletCounts.fourth;
+      lines.push(`${6 + i}. **${ordinals[i]} role (${experiences[i].company}): ${count} achievement bullets** - each ${config.bulletLengthRange} max`);
+    } else {
+      lines.push(`${6 + i}. (No ${ordinals[i].toLowerCase()} role)`);
+    }
   }
 
-  return `6. **Most recent role: 8-10 achievement bullets** - each 1-2 lines max
-7. (No second role)
-8. (No third role)`;
+  if (experiences.length >= 4) {
+    lines.push(`9. **Fourth role (${experiences[3].company}): ${config.bulletCounts.fourth} achievement bullets** - each ${config.bulletLengthRange} max`);
+  }
+
+  return lines.join("\n");
 };
 
 // ============================================

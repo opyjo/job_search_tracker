@@ -70,8 +70,18 @@ ${experienceRoles}
 // RESUME GENERATION (JD + user experience)
 // ============================================
 
-export const generateATSResumeSystemPrompt = (): string => {
+export const generateATSResumeSystemPrompt = (pageLength: 2 | 3 = 2): string => {
+  const pageLengthConfig = pageLength === 3
+    ? { summary: "4-5 sentences", highlights: "6-8", bullets: "5-7 per role", bulletLength: "2-3 lines" }
+    : { summary: "3-4 sentences", highlights: "4-5", bullets: "3-5 per role", bulletLength: "1-2 lines" };
+
   return `You are an expert ATS resume writer. Generate a truthful, ATS-optimized resume based exclusively on the job description and the candidate's own background text.
+
+PAGE LENGTH: This resume MUST fit on exactly ${pageLength} A4 pages — not more, not less.
+- Professional Summary: ${pageLengthConfig.summary}
+- Highlights: ${pageLengthConfig.highlights} bullets
+- Achievement bullets: ${pageLengthConfig.bullets}, each ${pageLengthConfig.bulletLength}
+- If content exceeds ${pageLength} pages, reduce bullets in older roles first
 
 CRITICAL RULES:
 1. Return JSON only — no markdown, no extra text.
@@ -82,6 +92,15 @@ CRITICAL RULES:
 6. The resume must be role-agnostic — it works equally well for a developer, payroll specialist, analyst, or any other role.
 7. For the skills array, create natural groupings that match the candidate's actual domain (e.g. "Payroll Systems", "Technical Skills", "Tools", "Certifications" — whatever fits the background).
 8. Include additional_sections only if the candidate background clearly mentions certifications, languages, publications, or similar standalone categories.
+
+JOB DESCRIPTION TAILORING (MOST IMPORTANT):
+1. FIRST, analyze the job description to identify: (a) the top 5 must-have skills/requirements, (b) key domain/industry focus, (c) seniority signals, (d) recurring keywords and phrases. Use this analysis to drive every section of the resume.
+2. Professional summary MUST directly address the JD's core requirements using the JD's own language and terminology. Lead with the candidate's strongest qualification that matches the JD's top priority.
+3. Each highlight bullet MUST map to a specific JD requirement or desired qualification — don't write generic highlights. If the JD asks for "experience with CI/CD pipelines", the highlight should mention the candidate's CI/CD work specifically.
+4. Achievement bullets: Rewrite and REORDER achievements within each role to put the most JD-relevant ones first. Rephrase achievements to emphasize the aspects that match JD requirements. Use JD terminology naturally within the bullet context.
+5. Every achievement bullet must follow: [Strong Action Verb] + [What you did + scope] + [Quantified result/impact]. Never start with "Responsible for", "Helped with", or "Worked on".
+6. Skills: Put JD-mentioned skills first in each category. Use JD terminology for category labels where it fits naturally (e.g. if JD says "Cloud Infrastructure", use that instead of generic "Technical Skills").
+7. Keyword strategy: Weave exact JD phrases into achievement bullets and summary — don't just list them in skills. The resume should read as if the candidate wrote it specifically for THIS job.
 
 Return this exact JSON shape:
 {

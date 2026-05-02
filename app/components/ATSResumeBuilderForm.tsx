@@ -9,6 +9,8 @@ interface ATSResumeBuilderFormProps {
   selectedModel: string;
   onSelectedModelChange: (value: string) => void;
   initialValues?: ATSResumeTitleRequest | null;
+  pageLength: 2 | 3;
+  onPageLengthChange: (value: 2 | 3) => void;
   onSubmit: (values: ATSResumeTitleRequest) => void;
 }
 
@@ -18,6 +20,8 @@ const ATSResumeBuilderForm = ({
   selectedModel,
   onSelectedModelChange,
   initialValues,
+  pageLength,
+  onPageLengthChange,
   onSubmit,
 }: ATSResumeBuilderFormProps) => {
   const [jobDescription, setJobDescription] = useState(
@@ -94,6 +98,42 @@ const ATSResumeBuilderForm = ({
         />
         <p className="mt-1.5 text-xs text-slate-500">
           {isJDValid ? "Job description ready." : `Minimum 50 characters required (${jobDescription.length}/50)`}
+        </p>
+      </div>
+
+      {/* ── Resume Length ── */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Resume Length
+        </label>
+        <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1 w-fit">
+          <button
+            type="button"
+            onClick={() => onPageLengthChange(2)}
+            disabled={isLoading}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
+              pageLength === 2
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            } disabled:cursor-not-allowed`}
+          >
+            2 Pages
+          </button>
+          <button
+            type="button"
+            onClick={() => onPageLengthChange(3)}
+            disabled={isLoading}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
+              pageLength === 3
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            } disabled:cursor-not-allowed`}
+          >
+            3 Pages
+          </button>
+        </div>
+        <p className="text-xs text-slate-400 mt-1.5">
+          2 pages recommended for &lt; 8 years experience
         </p>
       </div>
 

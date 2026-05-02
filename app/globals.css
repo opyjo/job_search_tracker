@@ -50,7 +50,7 @@
 
   /* Subtle text selection */
   ::selection {
-    background-color: rgb(251 191 36 / 0.3);
+    background-color: rgb(148 163 184 / 0.3);
     color: #1e293b;
   }
 
@@ -75,7 +75,7 @@
 
   /* Focus visible for better accessibility */
   *:focus-visible {
-    outline: 2px solid rgb(251 191 36);
+    outline: 2px solid rgb(100 116 139);
     outline-offset: 2px;
   }
 

@@ -10,7 +10,6 @@ interface JobDescriptionFormProps {
 const JobDescriptionForm = ({ onSubmit, isLoading }: JobDescriptionFormProps) => {
   const [jobDescription, setJobDescription] = useState("");
   const [charCount, setCharCount] = useState(0);
-
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setJobDescription(value);

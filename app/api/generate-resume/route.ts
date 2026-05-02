@@ -10,8 +10,9 @@ import { APIResponse } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
-    const { jobDescription, candidateId, additionalKeywords } =
-      await request.json();
+    const body = await request.json();
+    const { jobDescription, candidateId, additionalKeywords } = body;
+    const pageLength: 2 | 3 = body.pageLength === 3 ? 3 : 2;
 
     if (!jobDescription || typeof jobDescription !== "string") {
       return NextResponse.json(
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Generate dynamic system prompt based on candidate and additional keywords
-    const systemPrompt = generateSystemPrompt(candidate, validatedKeywords);
+    const systemPrompt = generateSystemPrompt(candidate, validatedKeywords, pageLength);
     const candidateExperience = formatCandidateExperience(candidate);
     const userMessage = formatUserMessage(
       jobDescription,
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
+      max_tokens: pageLength === 3 ? 6000 : 4096,
       temperature: 0.3,
       system: systemPrompt,
       messages: [

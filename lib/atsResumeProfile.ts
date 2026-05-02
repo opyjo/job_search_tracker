@@ -65,7 +65,7 @@ export const atsResumeProfile: DeveloperCandidateData = {
       ],
     },
     {
-      company: "CIBC + Canada Revenue Agency",
+      company: "CIBC",
       location: "Ontario, Canada",
       role: "Front-End Developer",
       dates: "Mar 2017 – Dec 2020",
