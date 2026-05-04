@@ -5,6 +5,7 @@ import { useState } from "react";
 interface CoverLetterFormProps {
   onSubmit: (companyName: string, whyThisCompany: string, jobDescription: string, companyMission?: string) => void;
   isLoading: boolean;
+  initialJobDescription?: string;
 }
 
 // Quick-select reasons with templates
@@ -59,11 +60,11 @@ const QUICK_REASONS = [
   },
 ];
 
-const CoverLetterForm = ({ onSubmit, isLoading }: CoverLetterFormProps) => {
+const CoverLetterForm = ({ onSubmit, isLoading, initialJobDescription }: CoverLetterFormProps) => {
   const [companyName, setCompanyName] = useState("");
   const [companyMission, setCompanyMission] = useState("");
   const [whyThisCompany, setWhyThisCompany] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
+  const [jobDescription, setJobDescription] = useState(initialJobDescription ?? "");
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {

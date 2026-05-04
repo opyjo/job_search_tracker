@@ -32,58 +32,30 @@ export const atsResumeProfile: DeveloperCandidateData = {
       location: "Mississauga, ON",
       role: "Software Engineer",
       dates: "Jan 2023 – Present",
-      achievements: [
-        "Developed Unified Promocodes Management application, improving promotional code efficiency by 30% and reducing related customer service queries by 25%",
-        "Implemented Playwright end-to-end testing, improving testing speed by 40% and increasing bug detection accuracy by 35%",
-        "Built scalable React single-page applications and Next.js pages with strong focus on performance and user engagement",
-        "Aligned front-end functionality with system architecture, driving a 20% improvement in cross-functional collaboration",
-        "Led code reviews and mentored junior developers on front-end best practices",
-      ],
     },
     {
       company: "Canada Revenue Agency",
       location: "Hamilton, ON",
       role: "Front End Developer",
       dates: "Oct 2020 – Dec 2022",
-      achievements: [
-        "Delivered multiple projects from concept to deployment with strong software development lifecycle execution",
-        "Reduced bug rates by 30% by implementing robust unit and integration testing standards",
-        "Applied engineering best practices for maintainable, secure, and reliable systems",
-        "Coordinated sprint planning and cross-timezone collaboration to improve team productivity by 20%",
-      ],
     },
     {
       company: "General Electric (Genpact)",
       location: "Mississauga, ON",
       role: "Junior Front-End Developer",
       dates: "Jan 2018 – Sept 2020",
-      achievements: [
-        "Redesigned primary web application for responsive behavior, increasing mobile user engagement by 40%",
-        "Improved site performance score by 35% through optimization techniques including lazy loading and asset minification",
-        "Enhanced cross-browser compatibility resulting in a 15% increase in user accessibility",
-        "Built and integrated REST APIs and AJAX workflows that improved application interactivity and retention by 20%",
-      ],
     },
     {
       company: "CIBC",
       location: "Ontario, Canada",
       role: "Front-End Developer",
       dates: "Mar 2017 – Dec 2020",
-      achievements: [
-        "Supported front-end modernization initiatives across enterprise and public-sector projects",
-        "Implemented user-facing features with emphasis on accessibility, reliability, and maintainability",
-        "Collaborated with QA and backend teams to deliver business-critical releases in Agile sprints",
-      ],
     },
     {
       company: "Skye Bank Plc",
       location: "Nigeria",
       role: "Technical Support / Early Career IT",
       dates: "Jan 2014 – Feb 2017",
-      achievements: [
-        "Provided foundational technical support and operational system assistance",
-        "Contributed to issue triage, process documentation, and stakeholder support workflows",
-      ],
     },
   ],
   education: [
@@ -113,13 +85,17 @@ export const atsResumeProfile: DeveloperCandidateData = {
 };
 
 export const formatATSResumeProfileExperience = (includeCertifications = false): string => {
-  const profile = includeCertifications && atsResumeProfile.certifications
-    ? {
-        ...atsResumeProfile,
-        education: [...atsResumeProfile.education, ...atsResumeProfile.certifications],
-      }
-    : atsResumeProfile;
-  return formatCandidateExperience(profile);
+  const baseText = formatCandidateExperience(atsResumeProfile);
+
+  if (!includeCertifications || !atsResumeProfile.certifications?.length) {
+    return baseText;
+  }
+
+  const designationsText = atsResumeProfile.certifications
+    .map((c) => `- ${c.degree} — ${c.institution}`)
+    .join("\n");
+
+  return `${baseText}\n\n**Professional Designations:**\n${designationsText}`;
 };
 
 export const formatATSResumeProfileRoles = (): string =>

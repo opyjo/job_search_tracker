@@ -100,7 +100,10 @@ CRITICAL RULES:
 5. If a required JD skill is genuinely missing from the candidate background, report it in keywords_missing.
 6. The resume must be role-agnostic — it works equally well for a developer, payroll specialist, analyst, or any other role.
 7. For the skills array, create natural groupings that match the candidate's actual domain (e.g. "Payroll Systems", "Technical Skills", "Tools", "Certifications" — whatever fits the background).
-8. Include additional_sections only if the candidate background clearly mentions certifications, languages, publications, or similar standalone categories.
+8. Include additional_sections only if the candidate background clearly mentions languages, publications, or similar standalone categories that are NOT certifications or designations.
+9. EDUCATION vs PROFESSIONAL DESIGNATIONS: Keep these strictly separate. Put ONLY formal academic degrees (Bachelor's, Master's, Diploma, Certificate programs from academic institutions) in the "education" array. Put ALL professional certifications and designations (CPA, ACCA, PMP, CISSP, PCP, etc.) in the "professional_designations" array. If the candidate background has a "Professional Designations" section, use those entries for "professional_designations".
+10. PROFESSIONAL EXPERIENCE BULLETS (when <candidate_projects> is provided): Achievement bullets for each role in the "experience" array MUST be derived from the project narratives in <candidate_projects>. Match each employer by name to their corresponding projects in <candidate_projects>, then select only the 2–3 projects per employer that are most relevant to the JD — do NOT attempt to cover every project listed. Write 3–5 bullets per role based solely on those selected projects. Prioritise projects whose domain, tools, or outcomes align with the JD's top requirements. Do NOT write generic bullets or invent work not described in <candidate_projects>.
+11. Do NOT include a "Key Projects" section in the resume. Project details should be woven into the experience bullets instead.
 
 JOB DESCRIPTION TAILORING (MOST IMPORTANT):
 1. FIRST, analyze the job description to identify: (a) the top 5 must-have skills/requirements, (b) key domain/industry focus, (c) seniority signals, (d) recurring keywords and phrases. Use this analysis to drive every section of the resume.
@@ -149,8 +152,15 @@ Return this exact JSON shape:
     ],
     "education": [
       {
-        "degree": "Degree or Certification",
-        "institution": "Institution",
+        "degree": "Formal academic degree only (Bachelor's, Master's, Diploma, etc.)",
+        "institution": "Academic institution name",
+        "location": "Optional"
+      }
+    ],
+    "professional_designations": [
+      {
+        "degree": "Professional certification or designation name (CPA, ACCA, PMP, etc.)",
+        "institution": "Awarding body or organization",
         "location": "Optional"
       }
     ],
@@ -176,7 +186,8 @@ export const formatATSResumeUserMessage = (
   candidateProfile: string,
   candidateContactLine: string,
   experienceTitleOverridesText: string,
-  additionalKeywords?: string[]
+  additionalKeywords?: string[],
+  projectsBlock?: string
 ): string => {
   const additionalKeywordsSection =
     additionalKeywords && additionalKeywords.length > 0
@@ -185,6 +196,13 @@ The candidate confirms they have experience with these keywords.
 Incorporate them naturally into the resume:
 ${additionalKeywords.join(", ")}
 </additional_keywords_to_incorporate>`
+      : "";
+
+  const candidateProjectsSection =
+    projectsBlock && projectsBlock.trim().length > 0
+      ? `\n\n<candidate_projects>
+${projectsBlock}
+</candidate_projects>`
       : "";
 
   return `Generate an ATS resume using the accepted target title, the job description, and the candidate's background below.
@@ -214,5 +232,5 @@ ${experienceTitleOverridesText}
 
 <candidate_background>
 ${candidateProfile}
-</candidate_background>${additionalKeywordsSection}`;
+</candidate_background>${additionalKeywordsSection}${candidateProjectsSection}`;
 };

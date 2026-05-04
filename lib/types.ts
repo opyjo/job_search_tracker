@@ -49,7 +49,7 @@ export interface CandidateExperience {
   location: string;
   role: string;
   dates: string;
-  achievements: string[];
+  achievements?: string[];
 }
 
 export interface CandidateEducation {
@@ -313,6 +313,12 @@ export interface DynamicATSExtraSection {
   bullets: string[];
 }
 
+export interface DynamicATSProject {
+  name: string;
+  technologies: string[];
+  bullets: string[];
+}
+
 export interface DynamicATSResume {
   target_job_title: string;
   contact: ATSContactInfo;
@@ -321,6 +327,8 @@ export interface DynamicATSResume {
   skills: DynamicATSSkillGroup[];
   experience: DynamicATSExperience[];
   education: DynamicATSEducation[];
+  professional_designations?: DynamicATSEducation[];
+  key_projects?: DynamicATSProject[];
   additional_sections?: DynamicATSExtraSection[];
 }
 

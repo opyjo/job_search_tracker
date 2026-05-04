@@ -17,6 +17,7 @@ interface DynamicATSResumePreviewProps {
   onToast?: (message: string, type: "success" | "error" | "info") => void;
   onRegenerateWithKeywords?: (keywords: string[]) => void;
   isRegenerating?: boolean;
+  onGenerateCoverLetter?: () => void;
 }
 
 const SectionHeading = ({ children }: { children: React.ReactNode }) => (
@@ -88,6 +89,16 @@ const buildPlainText = (resume: DynamicATSResume): string => {
     text += "\n";
   }
 
+  if (resume.professional_designations?.length) {
+    text += `PROFESSIONAL DESIGNATIONS\n`;
+    resume.professional_designations.forEach(
+      (pd) =>
+        (text += `${pd.degree} \u2014 ${pd.institution}${pd.location ? `, ${pd.location}` : ""}\n`)
+    );
+    text += "\n";
+  }
+
+
   resume.additional_sections?.forEach((sec) => {
     text += `${sec.heading.toUpperCase()}\n`;
     sec.bullets.forEach((b) => (text += `\u2022 ${b}\n`));
@@ -104,6 +115,7 @@ const DynamicATSResumePreview = ({
   onToast,
   onRegenerateWithKeywords,
   isRegenerating = false,
+  onGenerateCoverLetter,
 }: DynamicATSResumePreviewProps) => {
   const [activeTab, setActiveTab] = useState<"preview" | "optimization">(
     "preview"
@@ -266,6 +278,17 @@ const DynamicATSResumePreview = ({
           >
             {isDownloadingDocx ? "Generating..." : "Word (.docx)"}
           </button>
+          {onGenerateCoverLetter && (
+            <button
+              onClick={onGenerateCoverLetter}
+              onKeyDown={(e) => handleKeyDown(e, onGenerateCoverLetter)}
+              aria-label="Generate cover letter"
+              tabIndex={0}
+              className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl shadow-md hover:from-violet-600 hover:to-purple-600 focus:outline-none focus:ring-4 focus:ring-violet-300 transition-all"
+            >
+              Cover Letter
+            </button>
+          )}
         </div>
       </div>
 
@@ -402,19 +425,38 @@ const DynamicATSResumePreview = ({
           {resume.education?.length > 0 && (
             <section className="mb-8">
               <SectionHeading>Education</SectionHeading>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {resume.education.map((edu, i) => (
-                  <p key={i} className="text-slate-700">
-                    <span className="font-semibold">{edu.degree}</span> —{" "}
-                    {edu.institution}
-                    {edu.location && (
-                      <span className="text-slate-500">, {edu.location}</span>
-                    )}
-                  </p>
+                  <div key={i}>
+                    <p className="font-semibold text-slate-800">{edu.degree}</p>
+                    <p className="text-slate-500 text-sm">
+                      {edu.institution}
+                      {edu.location && `, ${edu.location}`}
+                    </p>
+                  </div>
                 ))}
               </div>
             </section>
           )}
+
+          {/* Professional Designations */}
+          {resume.professional_designations && resume.professional_designations.length > 0 && (
+            <section className="mb-8">
+              <SectionHeading>Professional Designations</SectionHeading>
+              <div className="space-y-3">
+                {resume.professional_designations.map((pd, i) => (
+                  <div key={i}>
+                    <p className="font-semibold text-slate-800">{pd.degree}</p>
+                    <p className="text-slate-500 text-sm">
+                      {pd.institution}
+                      {pd.location && `, ${pd.location}`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
 
           {/* Additional sections */}
           {resume.additional_sections?.map((sec, i) => (

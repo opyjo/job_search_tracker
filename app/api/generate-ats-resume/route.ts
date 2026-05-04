@@ -8,6 +8,7 @@ import {
 import { ATS_FIXED_PROFILE } from "@/lib/atsFixedProfile";
 import { atsResumeProfile, formatATSResumeProfileExperience } from "@/lib/atsResumeProfile";
 import { DEFAULT_ANTHROPIC_MODEL } from "@/lib/anthropicModels";
+import { parseProjectsForPrompt } from "@/lib/parseProjects";
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,6 +69,8 @@ export async function POST(request: NextRequest) {
             .join("\n")
         : "None provided.";
 
+    const projectsBlock = parseProjectsForPrompt();
+
     const message = await anthropic.messages.create({
       model: selectedModel,
       max_tokens: pageLength === 3 ? 6000 : 4096,
@@ -80,7 +83,7 @@ export async function POST(request: NextRequest) {
             ...body,
             jobDescription: trimmedJD,
             targetJobTitle: trimmedTitle,
-          }, candidateProfile, candidateContactLine, experienceTitleOverridesText, body.additionalKeywords),
+          }, candidateProfile, candidateContactLine, experienceTitleOverridesText, body.additionalKeywords, projectsBlock),
         },
       ],
     });

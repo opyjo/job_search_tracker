@@ -495,12 +495,13 @@ export const formatCandidateExperience = (candidate: CandidateData): string => {
   }
 
   const experienceText = experience
-    .map(
-      (exp) =>
-        `${exp.company} — ${exp.location}
-${exp.role} | ${exp.dates}
-${exp.achievements.map((a) => `- ${a}`).join("\n")}`
-    )
+    .map((exp) => {
+      const achievementLines =
+        exp.achievements && exp.achievements.length > 0
+          ? `\n${exp.achievements.map((a) => `- ${a}`).join("\n")}`
+          : "";
+      return `${exp.company} — ${exp.location}\n${exp.role} | ${exp.dates}${achievementLines}`;
+    })
     .join("\n\n");
 
   const educationText = education

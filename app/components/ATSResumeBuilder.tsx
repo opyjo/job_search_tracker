@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import ATSResumeBuilderForm from "./ATSResumeBuilderForm";
 import ATSJobTitleReview from "./ATSJobTitleReview";
 import DynamicATSResumePreview from "./DynamicATSResumePreview";
+import CoverLetterForm from "./CoverLetterForm";
+import CoverLetterPreview from "./CoverLetterPreview";
 import LoadingState from "./LoadingState";
 import {
   ATSExperienceTitleSuggestion,
@@ -14,8 +16,10 @@ import {
   DynamicATSResumeResponse,
 } from "@/lib/types";
 import { DEFAULT_ANTHROPIC_MODEL } from "@/lib/anthropicModels";
+import { CoverLetterResponse } from "@/app/api/generate-cover-letter/route";
+import { atsResumeProfile } from "@/lib/atsResumeProfile";
 
-type ATSBuilderState = "input" | "titleReview" | "loading" | "result" | "error";
+type ATSBuilderState = "input" | "titleReview" | "loading" | "result" | "error" | "coverLetterForm" | "coverLetterLoading" | "coverLetterResult";
 
 interface ATSResumeBuilderProps {
   onToast: (message: string, type: "success" | "error" | "info") => void;
@@ -45,6 +49,8 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
   const [pageLength, setPageLength] = useState<2 | 3>(2);
   const [includeCertifications, setIncludeCertifications] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [coverLetterData, setCoverLetterData] = useState<CoverLetterResponse | null>(null);
+  const [coverLetterCompany, setCoverLetterCompany] = useState("");
 
   useEffect(() => {
     const loadModels = async () => {
@@ -218,6 +224,42 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
     }
   };
 
+  const handleCoverLetterSubmit = async (
+    companyName: string,
+    whyThisCompany: string,
+    jobDescription: string,
+    companyMission?: string
+  ) => {
+    setState("coverLetterLoading");
+    setCoverLetterCompany(companyName);
+
+    try {
+      const response = await fetch("/api/generate-ats-cover-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyName, whyThisCompany, jobDescription, companyMission, resumeData }),
+      });
+      const data = (await response.json()) as CoverLetterResponse & { error?: string };
+
+      if (!response.ok || data.error) {
+        const message = data.error || "Failed to generate cover letter.";
+        setErrorMessage(message);
+        setState("error");
+        onToast(message, "error");
+        return;
+      }
+
+      setCoverLetterData(data);
+      setState("coverLetterResult");
+      onToast("Cover letter generated successfully!", "success");
+    } catch {
+      const message = "Failed to connect to the server. Please try again.";
+      setErrorMessage(message);
+      setState("error");
+      onToast(message, "error");
+    }
+  };
+
   const handleReset = () => {
     setState("input");
     setErrorMessage("");
@@ -227,6 +269,8 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
     setExperienceTitleSuggestions([]);
     setExperienceTitleOverrides({});
     setResumeData(null);
+    setCoverLetterData(null);
+    setCoverLetterCompany("");
   };
 
   const handleExperienceTitleChange = (id: string, value: string) => {
@@ -238,7 +282,7 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
     setErrorMessage("");
   };
 
-  if (state === "loading") {
+  if (state === "loading" || state === "coverLetterLoading") {
     return (
       <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
         <LoadingState />
@@ -255,7 +299,56 @@ const ATSResumeBuilder = ({ onToast }: ATSResumeBuilderProps) => {
         onToast={onToast}
         onRegenerateWithKeywords={handleRegenerateWithKeywords}
         isRegenerating={isRegenerating}
+        onGenerateCoverLetter={() => setState("coverLetterForm")}
       />
+    );
+  }
+
+  if (state === "coverLetterForm") {
+    return (
+      <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
+        <div className="mb-6 flex items-center gap-3">
+          <button
+            onClick={() => setState("result")}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 focus:outline-none focus:ring-4 focus:ring-slate-200 transition-all"
+            aria-label="Back to resume"
+          >
+            ← Back to Resume
+          </button>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">ATS Cover Letter</h2>
+            <p className="text-sm text-slate-500">Generate a cover letter to accompany your ATS resume</p>
+          </div>
+        </div>
+        <CoverLetterForm
+          onSubmit={handleCoverLetterSubmit}
+          isLoading={false}
+          initialJobDescription={lastFormValues?.jobDescription}
+        />
+      </div>
+    );
+  }
+
+  if (state === "coverLetterResult" && coverLetterData) {
+    return (
+      <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-6 lg:p-10">
+        <div className="mb-6">
+          <button
+            onClick={() => setState("result")}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 focus:outline-none focus:ring-4 focus:ring-slate-200 transition-all"
+            aria-label="Back to resume"
+          >
+            ← Back to Resume
+          </button>
+        </div>
+        <CoverLetterPreview
+          data={coverLetterData}
+          companyName={coverLetterCompany}
+          onReset={handleReset}
+          onToast={onToast}
+          candidate={atsResumeProfile}
+        />
+      </div>
     );
   }
 

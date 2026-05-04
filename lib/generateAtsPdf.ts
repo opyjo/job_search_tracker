@@ -1,7 +1,8 @@
 import { jsPDF } from "jspdf";
 import { DynamicATSResume } from "./types";
 
-const FONT_SIZE = { name: 18, title: 13, heading: 12, sub: 11, body: 10, small: 9 };
+const FONT = "times";
+const FONT_SIZE = { name: 18, title: 13, heading: 11, sub: 11, body: 10, small: 9 };
 const COLORS = { black: "#000000", gray: "#4a5568" };
 const MARGIN = { left: 20, right: 20, top: 20 };
 const PAGE_WIDTH = 210;
@@ -27,9 +28,9 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
   ) => {
     doc.setFontSize(size);
     doc.setTextColor(color);
-    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFont(FONT, bold ? "bold" : "normal");
     const lines = doc.splitTextToSize(text, maxW);
-    const lh = size * 0.5;
+    const lh = size * 0.52;
     lines.forEach((line: string) => {
       checkPage(lh);
       doc.text(line, MARGIN.left, y);
@@ -42,7 +43,7 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
     checkPage(15);
     y += 4;
     doc.setFontSize(FONT_SIZE.heading);
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     doc.setTextColor(COLORS.black);
     doc.text(title.toUpperCase(), MARGIN.left, y);
     y += 2;
@@ -52,12 +53,35 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
     y += 6;
   };
 
+  const addEducationEntry = (degree: string, institution: string, location?: string) => {
+    checkPage(12);
+    doc.setFontSize(FONT_SIZE.body);
+    doc.setFont(FONT, "bold");
+    doc.setTextColor(COLORS.black);
+    const degreeLines = doc.splitTextToSize(degree, CONTENT_WIDTH);
+    degreeLines.forEach((line: string) => {
+      checkPage(5);
+      doc.text(line, MARGIN.left, y);
+      y += 5;
+    });
+    doc.setFont(FONT, "normal");
+    doc.setTextColor(COLORS.gray);
+    const instText = `${institution}${location ? `, ${location}` : ""}`;
+    const instLines = doc.splitTextToSize(instText, CONTENT_WIDTH);
+    instLines.forEach((line: string) => {
+      checkPage(5);
+      doc.text(line, MARGIN.left, y);
+      y += 5;
+    });
+    y += 1;
+  };
+
   const c = resume.contact;
   const contactParts = [c.email, c.phone, c.location, c.linkedin].filter(Boolean);
 
   // Name
   doc.setFontSize(FONT_SIZE.name);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(FONT, "bold");
   doc.setTextColor(COLORS.black);
   const nameW = doc.getTextWidth(c.name);
   doc.text(c.name, (PAGE_WIDTH - nameW) / 2, y);
@@ -66,7 +90,7 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
   // Target title
   if (resume.target_job_title) {
     doc.setFontSize(FONT_SIZE.title);
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     const titleW = doc.getTextWidth(resume.target_job_title);
     doc.text(resume.target_job_title, (PAGE_WIDTH - titleW) / 2, y);
     y += 6;
@@ -75,7 +99,7 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
   // Contact
   if (contactParts.length > 0) {
     doc.setFontSize(FONT_SIZE.small);
-    doc.setFont("helvetica", "normal");
+    doc.setFont(FONT, "normal");
     doc.setTextColor(COLORS.gray);
     const contactText = contactParts.join(" | ");
     const contactW = doc.getTextWidth(contactText);
@@ -94,12 +118,12 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
     resume.highlights.forEach((h) => {
       checkPage(8);
       doc.setFontSize(FONT_SIZE.body);
-      doc.setFont("helvetica", "normal");
+      doc.setFont(FONT, "normal");
       doc.setTextColor(COLORS.black);
       doc.text("\u2713", MARGIN.left, y);
       const lines = doc.splitTextToSize(h, CONTENT_WIDTH - 8);
       lines.forEach((line: string, i: number) => {
-        if (i > 0) { y += 4; }
+        if (i > 0) { checkPage(5); y += 5; }
         doc.text(line, MARGIN.left + 6, y);
       });
       y += 5;
@@ -114,16 +138,22 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
       if (!group.items?.length) return;
       checkPage(8);
       doc.setFontSize(FONT_SIZE.body);
-      doc.setFont("helvetica", "bold");
+      doc.setFont(FONT, "bold");
       doc.setTextColor(COLORS.black);
-      doc.text(`${group.label}: `, MARGIN.left, y);
-      const labelW = doc.getTextWidth(`${group.label}: `);
-      doc.setFont("helvetica", "normal");
+      const labelText = `${group.label}: `;
+      doc.text(labelText, MARGIN.left, y);
+      const labelW = doc.getTextWidth(labelText);
+      doc.setFont(FONT, "normal");
       const skillText = group.items.join(", ");
       const skillLines = doc.splitTextToSize(skillText, CONTENT_WIDTH - labelW);
       skillLines.forEach((line: string, i: number) => {
-        if (i === 0) { doc.text(line, MARGIN.left + labelW, y); }
-        else { y += 4; doc.text(line, MARGIN.left, y); }
+        if (i === 0) {
+          doc.text(line, MARGIN.left + labelW, y);
+        } else {
+          checkPage(5);
+          y += 5;
+          doc.text(line, MARGIN.left, y);
+        }
       });
       y += 5;
     });
@@ -137,22 +167,22 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
       checkPage(20);
       // Company
       doc.setFontSize(FONT_SIZE.sub);
-      doc.setFont("helvetica", "bold");
+      doc.setFont(FONT, "bold");
       doc.setTextColor(COLORS.black);
       doc.text(exp.company, MARGIN.left, y);
       if (exp.location) {
         const compW = doc.getTextWidth(`${exp.company} `);
-        doc.setFont("helvetica", "normal");
+        doc.setFont(FONT, "normal");
         doc.setTextColor(COLORS.gray);
         doc.text(`\u2014 ${exp.location}`, MARGIN.left + compW, y);
       }
       y += 5;
       // Role + dates
       doc.setFontSize(FONT_SIZE.body);
-      doc.setFont("helvetica", "italic");
+      doc.setFont(FONT, "italic");
       doc.setTextColor(COLORS.black);
       doc.text(exp.role, MARGIN.left, y);
-      doc.setFont("helvetica", "normal");
+      doc.setFont(FONT, "normal");
       doc.setTextColor(COLORS.gray);
       const datesW = doc.getTextWidth(exp.dates);
       doc.text(exp.dates, PAGE_WIDTH - MARGIN.right - datesW, y);
@@ -161,12 +191,12 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
       exp.achievements.forEach((a) => {
         checkPage(8);
         doc.setFontSize(FONT_SIZE.body);
-        doc.setFont("helvetica", "normal");
+        doc.setFont(FONT, "normal");
         doc.setTextColor(COLORS.black);
         doc.text("\u2022", MARGIN.left, y);
         const lines = doc.splitTextToSize(a, CONTENT_WIDTH - 6);
         lines.forEach((line: string, i: number) => {
-          if (i > 0) { y += 4; }
+          if (i > 0) { checkPage(5); y += 5; }
           doc.text(line, MARGIN.left + 5, y);
         });
         y += 5;
@@ -175,23 +205,24 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
     });
   }
 
-  // Education
+  // Education (formal academic degrees only)
   if (resume.education?.length) {
     addHeading("Education");
     resume.education.forEach((edu) => {
-      checkPage(8);
-      doc.setFontSize(FONT_SIZE.body);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(COLORS.black);
-      doc.text(edu.degree, MARGIN.left, y);
-      const degW = doc.getTextWidth(`${edu.degree} \u2014 `);
-      doc.setFont("helvetica", "normal");
-      const instText = `\u2014 ${edu.institution}${edu.location ? `, ${edu.location}` : ""}`;
-      doc.text(instText, MARGIN.left + degW, y);
-      y += 5;
+      addEducationEntry(edu.degree, edu.institution, edu.location);
     });
     y += 2;
   }
+
+  // Professional Designations
+  if (resume.professional_designations?.length) {
+    addHeading("Professional Designations");
+    resume.professional_designations.forEach((pd) => {
+      addEducationEntry(pd.degree, pd.institution, pd.location);
+    });
+    y += 2;
+  }
+
 
   // Additional sections
   resume.additional_sections?.forEach((sec) => {
@@ -199,12 +230,12 @@ export const generateDynamicATSPdf = (resume: DynamicATSResume): Blob => {
     sec.bullets.forEach((b) => {
       checkPage(8);
       doc.setFontSize(FONT_SIZE.body);
-      doc.setFont("helvetica", "normal");
+      doc.setFont(FONT, "normal");
       doc.setTextColor(COLORS.black);
       doc.text("\u2022", MARGIN.left, y);
       const lines = doc.splitTextToSize(b, CONTENT_WIDTH - 6);
       lines.forEach((line: string, i: number) => {
-        if (i > 0) { y += 4; }
+        if (i > 0) { checkPage(5); y += 5; }
         doc.text(line, MARGIN.left + 5, y);
       });
       y += 5;

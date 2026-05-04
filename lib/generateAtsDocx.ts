@@ -234,6 +234,33 @@ export const generateDynamicATSDocx = async (
     children.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
   }
 
+  // Professional Designations
+  if (resume.professional_designations?.length) {
+    children.push(sectionHeading("Professional Designations"));
+    resume.professional_designations.forEach((pd) => {
+      children.push(
+        new Paragraph({
+          spacing: { after: 80 },
+          children: [
+            new TextRun({
+              text: pd.degree,
+              bold: true,
+              size: SIZE.body,
+              font: FONT,
+            }),
+            new TextRun({
+              text: ` \u2014 ${pd.institution}${pd.location ? `, ${pd.location}` : ""}`,
+              size: SIZE.body,
+              font: FONT,
+            }),
+          ],
+        })
+      );
+    });
+    children.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
+  }
+
+
   // Additional sections
   resume.additional_sections?.forEach((sec) => {
     children.push(sectionHeading(sec.heading));
