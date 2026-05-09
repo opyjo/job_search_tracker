@@ -167,14 +167,15 @@ const DynamicATSResumePreview = ({
       const blob = await generateDynamicATSDocxFromTemplate(resume);
       saveAs(blob, `${fileName}.docx`);
       onToast?.("Word document downloaded!", "success");
-    } catch {
+    } catch (templateError) {
+      console.warn(
+        "Template render failed; using generated ATS Word document.",
+        templateError
+      );
       try {
         const fallbackBlob = await generateDynamicATSDocx(resume);
         saveAs(fallbackBlob, `${fileName}.docx`);
-        onToast?.(
-          "Template render failed. Downloaded Word document using fallback format.",
-          "info"
-        );
+        onToast?.("Word document downloaded!", "success");
       } catch {
         onToast?.("Failed to generate Word document.", "error");
       }
