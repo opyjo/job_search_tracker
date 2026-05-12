@@ -49,7 +49,7 @@ export const atsResumeProfile: DeveloperCandidateData = {
       company: "CIBC",
       location: "Ontario, Canada",
       role: "Front-End Developer",
-      dates: "Mar 2017 – Dec 2020",
+      dates: "Mar 2017 – Dec 2017",
     },
     {
       company: "Skye Bank Plc",
