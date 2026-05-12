@@ -5,6 +5,7 @@ import { saveAs } from "file-saver";
 import {
   DynamicATSResumeResponse,
   DynamicATSResume,
+  DynamicATSExperience,
 } from "@/lib/types";
 import { generateDynamicATSDocx } from "@/lib/generateAtsDocx";
 import { generateDynamicATSDocxFromTemplate } from "@/lib/generateAtsDocxFromTemplate";
@@ -125,8 +126,19 @@ const DynamicATSResumePreview = ({
   const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(
     new Set()
   );
+  const [editedExperiences, setEditedExperiences] = useState<Map<number, DynamicATSExperience>>(new Map());
+  const [activeEditIndex, setActiveEditIndex] = useState<number | null>(null);
+  const [loadingEditIndex, setLoadingEditIndex] = useState<number | null>(null);
+  const [editInstruction, setEditInstruction] = useState<string>("");
+  const [editError, setEditError] = useState<string | null>(null);
 
-  const { dynamic_resume: resume, optimization_notes } = data;
+  const { dynamic_resume: rawResume, optimization_notes } = data;
+  const resume: DynamicATSResume = {
+    ...rawResume,
+    experience: rawResume.experience.map((exp, i) =>
+      editedExperiences.has(i) ? editedExperiences.get(i)! : exp
+    ),
+  };
 
   const handleKeywordToggle = (keyword: string) => {
     setSelectedKeywords((prev) => {
@@ -211,6 +223,60 @@ const DynamicATSResumePreview = ({
       e.preventDefault();
       action();
     }
+  };
+
+  const handleOpenEdit = (i: number) => {
+    setActiveEditIndex(i);
+    setEditInstruction("");
+    setEditError(null);
+  };
+
+  const handleCancelEdit = () => {
+    setActiveEditIndex(null);
+    setEditInstruction("");
+    setEditError(null);
+  };
+
+  const handleSubmitEdit = async (i: number) => {
+    const currentExp = editedExperiences.get(i) ?? rawResume.experience[i];
+    setLoadingEditIndex(i);
+    setEditError(null);
+    try {
+      const res = await fetch("/api/edit-experience", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          experience: currentExp,
+          instruction: editInstruction,
+          variant: "ats",
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setEditError(json.error ?? "Edit failed. Please try again.");
+        return;
+      }
+      setEditedExperiences((prev) => {
+        const next = new Map(prev);
+        next.set(i, json.experience as DynamicATSExperience);
+        return next;
+      });
+      setActiveEditIndex(null);
+      setEditInstruction("");
+      onToast?.("Experience entry updated!", "success");
+    } catch {
+      setEditError("Network error. Please try again.");
+    } finally {
+      setLoadingEditIndex(null);
+    }
+  };
+
+  const handleRevertEdit = (i: number) => {
+    setEditedExperiences((prev) => {
+      const next = new Map(prev);
+      next.delete(i);
+      return next;
+    });
   };
 
   return (
@@ -392,32 +458,103 @@ const DynamicATSResumePreview = ({
             <section className="mb-8">
               <SectionHeading>Professional Experience</SectionHeading>
               <div className="space-y-6">
-                {resume.experience.map((exp, i) => (
-                  <div key={i}>
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
-                      <h3 className="font-bold text-slate-800">
-                        {exp.company}
-                        {exp.location && (
-                          <span className="font-normal text-slate-500">
-                            {" "}
-                            — {exp.location}
-                          </span>
-                        )}
-                      </h3>
+                {resume.experience.map((exp, i) => {
+                  const isEdited = editedExperiences.has(i);
+                  const isFormOpen = activeEditIndex === i;
+                  const isLoading = loadingEditIndex === i;
+                  return (
+                    <div key={i} className="relative group">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
+                        <h3 className="font-bold text-slate-800">
+                          {exp.company}
+                          {exp.location && (
+                            <span className="font-normal text-slate-500">
+                              {" "}
+                              — {exp.location}
+                            </span>
+                          )}
+                        </h3>
+                        {/* Action buttons — visible on hover */}
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => isFormOpen ? handleCancelEdit() : handleOpenEdit(i)}
+                            className="text-xs px-2 py-1 rounded-md bg-violet-100 text-violet-700 hover:bg-violet-200 transition-colors"
+                          >
+                            {isFormOpen ? "Cancel" : isEdited ? "Re-edit" : "Edit with AI"}
+                          </button>
+                          {isEdited && !isFormOpen && (
+                            <button
+                              onClick={() => handleRevertEdit(i)}
+                              className="text-xs px-2 py-1 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                            >
+                              Revert
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
+                        <p className="italic text-slate-700">{exp.role}</p>
+                        <p className="text-slate-500 text-sm">{exp.dates}</p>
+                      </div>
+                      <ul className="list-disc list-outside ml-5 space-y-1">
+                        {exp.achievements.map((a, j) => (
+                          <li key={j} className="text-slate-700">
+                            {a}
+                          </li>
+                        ))}
+                      </ul>
+                      {isEdited && !isFormOpen && (
+                        <span className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
+                          AI edited
+                        </span>
+                      )}
+                      {isFormOpen && (
+                        <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                          <p className="text-xs font-semibold text-slate-600">
+                            Edit with AI — {exp.role} at {exp.company}
+                          </p>
+                          <textarea
+                            value={editInstruction}
+                            onChange={(e) => setEditInstruction(e.target.value)}
+                            disabled={isLoading}
+                            placeholder='e.g. "make bullets more concise" or "add more metrics"'
+                            rows={2}
+                            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none disabled:opacity-50"
+                          />
+                          {editError && (
+                            <p className="text-xs text-red-600">{editError}</p>
+                          )}
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={handleCancelEdit}
+                              disabled={isLoading}
+                              className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => handleSubmitEdit(i)}
+                              disabled={!editInstruction.trim() || isLoading}
+                              className="text-xs px-3 py-1.5 rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                              {isLoading ? (
+                                <>
+                                  <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                  </svg>
+                                  Editing…
+                                </>
+                              ) : (
+                                "Apply AI Edit"
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
-                      <p className="italic text-slate-700">{exp.role}</p>
-                      <p className="text-slate-500 text-sm">{exp.dates}</p>
-                    </div>
-                    <ul className="list-disc list-outside ml-5 space-y-1">
-                      {exp.achievements.map((a, j) => (
-                        <li key={j} className="text-slate-700">
-                          {a}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           )}

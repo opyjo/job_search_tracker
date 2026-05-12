@@ -29,7 +29,7 @@ export const generateCoverLetterSystemPrompt = (candidate: CandidateData): strin
   };
 
   const skillsSummary = getSkillsSummary();
-  const keyAchievements = candidate.experience[0].achievements.slice(0, 5);
+  const keyAchievements = candidate.experience[0]?.achievements?.slice(0, 5) ?? [];
   const professionDescription = getProfessionDescription();
 
   return `You are an expert career coach and professional writer with 15 years of experience crafting compelling cover letters that land interviews. Your letters are personalized, genuine, and professionally tailored.
