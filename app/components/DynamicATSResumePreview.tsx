@@ -121,6 +121,7 @@ const DynamicATSResumePreview = ({
   const [activeTab, setActiveTab] = useState<"preview" | "optimization">(
     "preview"
   );
+  const [showPanel, setShowPanel] = useState(true);
   const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(
@@ -359,8 +360,8 @@ const DynamicATSResumePreview = ({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="inline-flex bg-slate-100 p-1 rounded-xl gap-1">
+      {/* Tabs — mobile/tablet only */}
+      <div className="inline-flex bg-slate-100 p-1 rounded-xl gap-1 lg:hidden">
         <button
           onClick={() => setActiveTab("preview")}
           onKeyDown={(e) => handleKeyDown(e, () => setActiveTab("preview"))}
@@ -391,7 +392,35 @@ const DynamicATSResumePreview = ({
         </button>
       </div>
 
-      {activeTab === "preview" ? (
+      {/* Desktop toggle button */}
+      <div className="hidden lg:flex items-center gap-2">
+        <button
+          onClick={() => setShowPanel((v) => !v)}
+          className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-1.5"
+          aria-label={showPanel ? "Hide optimization notes panel" : "Show optimization notes panel"}
+        >
+          {showPanel ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+              Hide Notes
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+              Show Notes
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Content — side-by-side on desktop, tab-switched on mobile */}
+      <div className="lg:flex lg:gap-6">
+        {/* Resume Preview */}
+        <div className={`${activeTab !== "preview" ? "hidden lg:block" : ""} ${showPanel ? "lg:w-[70%]" : "lg:w-full"} transition-all min-w-0`}>
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 lg:p-12">
           {/* Header */}
           <div className="text-center border-b border-slate-200 pb-6 mb-6">
@@ -610,24 +639,59 @@ const DynamicATSResumePreview = ({
             </section>
           ))}
         </div>
-      ) : (
+        </div>
+
+        {/* Optimization Notes Panel */}
+        <div className={`${activeTab !== "optimization" ? "hidden lg:block" : ""} ${showPanel ? "lg:w-[30%]" : "hidden"} mt-4 lg:mt-0 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto transition-all min-w-0`}>
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-8">
-          {/* Keywords incorporated */}
+          {/* Suggestions — first */}
+          {optimization_notes.suggestions && (
+            <section>
+              <h3 className="text-sm font-bold text-slate-800 mb-2">
+                Suggestions
+              </h3>
+              <ul className="space-y-1.5">
+                {(typeof optimization_notes.suggestions === "string"
+                  ? optimization_notes.suggestions.split(/(?:\.\s+|\n)/).filter((s: string) => s.trim())
+                  : Array.isArray(optimization_notes.suggestions)
+                  ? optimization_notes.suggestions
+                  : []
+                ).map((item: string, i: number) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600 leading-relaxed">
+                    <span className="text-amber-500 mt-0.5 shrink-0">&#8226;</span>
+                    <span>{item.trim().replace(/\.$/, "")}.</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Keywords incorporated — collapsible */}
           {optimization_notes.keywords_incorporated?.length > 0 && (
             <section>
-              <h3 className="text-base font-bold text-slate-800 mb-3">
-                Keywords Incorporated ✓
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {optimization_notes.keywords_incorporated.map((kw, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium border border-emerald-200"
-                  >
-                    {kw}
+              <details className="group">
+                <summary className="flex items-center justify-between cursor-pointer list-none text-base font-bold text-slate-800 mb-1 select-none">
+                  <span className="flex items-center gap-2">
+                    Keywords Incorporated
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                      {optimization_notes.keywords_incorporated.length}
+                    </span>
                   </span>
-                ))}
-              </div>
+                  <svg className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </summary>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {optimization_notes.keywords_incorporated.map((kw, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium border border-emerald-200"
+                    >
+                      {kw}
+                    </span>
+                  ))}
+                </div>
+              </details>
             </section>
           )}
 
@@ -799,18 +863,6 @@ const DynamicATSResumePreview = ({
               </section>
             )}
 
-          {/* Suggestions */}
-          {optimization_notes.suggestions && (
-            <section>
-              <h3 className="text-base font-bold text-slate-800 mb-2">
-                Suggestions
-              </h3>
-              <p className="text-slate-700 leading-relaxed">
-                {optimization_notes.suggestions}
-              </p>
-            </section>
-          )}
-
           <div className="pt-4 border-t border-slate-100">
             <p className="text-xs text-slate-400">
               Resume generated entirely from your job description and pasted
@@ -818,7 +870,8 @@ const DynamicATSResumePreview = ({
             </p>
           </div>
         </div>
-      )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -34,6 +34,7 @@ const ResumePreview = ({
   const [activeTab, setActiveTab] = useState<"preview" | "optimization">(
     "preview"
   );
+  const [showPanel, setShowPanel] = useState(true);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(
     new Set()
@@ -762,8 +763,8 @@ const ResumePreview = ({
         </div>
       </div>
 
-      {/* Tab navigation */}
-      <div className="flex gap-1 mb-6 bg-slate-100 p-1 rounded-lg w-fit">
+      {/* Tab navigation — mobile/tablet only */}
+      <div className="flex gap-1 mb-6 bg-slate-100 p-1 rounded-lg w-fit lg:hidden">
         <button
           onClick={() => setActiveTab("preview")}
           onKeyDown={(e) => handleKeyDown(e, () => setActiveTab("preview"))}
@@ -798,8 +799,35 @@ const ResumePreview = ({
         </button>
       </div>
 
-      {/* Content */}
-      {activeTab === "preview" ? (
+      {/* Desktop toggle button */}
+      <div className="hidden lg:flex items-center gap-2 mb-6">
+        <button
+          onClick={() => setShowPanel((v) => !v)}
+          className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-1.5"
+          aria-label={showPanel ? "Hide optimization notes panel" : "Show optimization notes panel"}
+        >
+          {showPanel ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+              Hide Notes
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+              Show Notes
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Content — side-by-side on desktop, tab-switched on mobile */}
+      <div className="lg:flex lg:gap-6">
+        {/* Resume Preview */}
+        <div className={`${activeTab !== "preview" ? "hidden lg:block" : ""} ${showPanel ? "lg:w-[70%]" : "lg:w-full"} transition-all min-w-0`}>
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 lg:p-12">
           {/* Resume Header */}
           <div className="text-center border-b border-slate-200 pb-6 mb-6">
@@ -1039,15 +1067,18 @@ const ResumePreview = ({
             </div>
           </section>
         </div>
-      ) : (
+        </div>
+
+        {/* Optimization Notes Panel */}
+        <div className={`${activeTab !== "optimization" ? "hidden lg:block" : ""} ${showPanel ? "lg:w-[30%]" : "hidden"} mt-4 lg:mt-0 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto transition-all min-w-0`}>
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-          {/* Keywords Incorporated */}
+          {/* Suggestions — first */}
           <section className="mb-8">
-            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+            <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 text-emerald-600"
+                  className="h-3 w-3 text-emerald-600"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -1057,24 +1088,71 @@ const ResumePreview = ({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M5 13l4 4L19 7"
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                   />
                 </svg>
               </span>
-              Keywords Incorporated ✓
+              Suggestions
             </h3>
-            <div className="flex flex-wrap gap-2">
-              {optimization_notes.keywords_incorporated.map(
-                (keyword, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium border border-emerald-200"
-                  >
-                    {keyword}
+            <ul className="space-y-1.5 ml-8">
+              {(typeof optimization_notes.suggestions === "string"
+                ? optimization_notes.suggestions.split(/(?:\.\s+|\n)/).filter((s: string) => s.trim())
+                : Array.isArray(optimization_notes.suggestions)
+                ? optimization_notes.suggestions
+                : []
+              ).map((item: string, i: number) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-slate-600 leading-relaxed">
+                  <span className="text-amber-500 mt-0.5 shrink-0">&#8226;</span>
+                  <span>{item.trim().replace(/\.$/, "")}.</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* Keywords Incorporated — collapsible */}
+          <section className="mb-8">
+            <details className="group">
+              <summary className="flex items-center justify-between cursor-pointer list-none text-lg font-bold text-slate-800 mb-1 select-none">
+                <span className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 text-emerald-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
                   </span>
-                )
-              )}
-            </div>
+                  Keywords Incorporated
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                    {optimization_notes.keywords_incorporated.length}
+                  </span>
+                </span>
+                <svg className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <div className="flex flex-wrap gap-1.5 mt-3 ml-10">
+                {optimization_notes.keywords_incorporated.map(
+                  (keyword, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium border border-emerald-200"
+                    >
+                      {keyword}
+                    </span>
+                  )
+                )}
+              </div>
+            </details>
           </section>
 
           {/* Keywords Missing */}
@@ -1325,36 +1403,9 @@ const ResumePreview = ({
             </p>
           </section>
 
-          {/* Suggestions */}
-          <section>
-            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                  />
-                </svg>
-              </span>
-              Additional Suggestions
-            </h3>
-            <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
-              <p className="text-slate-700 leading-relaxed">
-                {optimization_notes.suggestions}
-              </p>
-            </div>
-          </section>
         </div>
-      )}
+        </div>
+      </div>
     </div>
   );
 };

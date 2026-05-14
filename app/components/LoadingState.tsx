@@ -1,34 +1,49 @@
 "use client";
 
-const LoadingState = () => {
+interface LoadingStateProps {
+  title?: string;
+  subtitle?: string;
+  steps?: string[];
+}
+
+const DEFAULT_STEPS = [
+  "Analyzing job requirements",
+  "Matching your experience",
+  "Optimizing keywords",
+  "Generating tailored content",
+];
+
+const LoadingState = ({
+  title = "Tailoring Your Resume",
+  subtitle = "Our AI is analyzing the job description and crafting a personalized resume optimized for this specific role...",
+  steps = DEFAULT_STEPS,
+}: LoadingStateProps) => {
   return (
     <div className="flex flex-col items-center justify-center py-16">
       <div className="relative">
         {/* Outer spinning ring */}
         <div className="w-20 h-20 border-4 border-amber-200 rounded-full animate-spin border-t-amber-500" />
-        
+
         {/* Inner pulsing dot */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-4 h-4 bg-amber-500 rounded-full animate-pulse" />
         </div>
       </div>
-      
+
       <div className="mt-8 text-center">
         <h3 className="text-xl font-semibold text-slate-800 mb-2">
-          Tailoring Your Resume
+          {title}
         </h3>
         <p className="text-slate-500 max-w-md">
-          Our AI is analyzing the job description and crafting a personalized
-          resume optimized for this specific role...
+          {subtitle}
         </p>
       </div>
-      
+
       {/* Animated progress steps */}
       <div className="mt-8 flex flex-col gap-3 text-sm">
-        <LoadingStep text="Analyzing job requirements" delay={0} />
-        <LoadingStep text="Matching your experience" delay={1} />
-        <LoadingStep text="Optimizing keywords" delay={2} />
-        <LoadingStep text="Generating tailored content" delay={3} />
+        {steps.map((text, i) => (
+          <LoadingStep key={i} text={text} delay={i} />
+        ))}
       </div>
     </div>
   );
